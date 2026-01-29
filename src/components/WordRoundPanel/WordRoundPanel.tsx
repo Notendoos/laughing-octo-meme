@@ -6,6 +6,7 @@ import type { GuessInputRowHandle } from "../GuessPanel/GuessInputRow.tsx";
 import GuessFooter from "../GuessPanel/GuessFooter.tsx";
 import { GuessGrid } from "../GuessPanel/GuessGrid.tsx";
 import GuessHeader from "../GuessPanel/GuessHeader.tsx";
+import { TimerDisplay } from "../TimerDisplay/TimerDisplay.tsx";
 
 type WordRoundPanelProps = {
   phaseKind: string;
@@ -19,7 +20,8 @@ type WordRoundPanelProps = {
   wordRoundEvent: WordRoundEvent | null;
   roundNumber: number;
   timerPaused: boolean;
-  dutchMode?: boolean;
+  allowDutch?: boolean;
+  onToggleTimer: () => void;
   guessInputRef?: Ref<GuessInputRowHandle>;
   languageLabel?: string;
   showLanguageChip?: boolean;
@@ -37,7 +39,7 @@ export default function WordRoundPanel({
   wordRoundEvent,
   roundNumber,
   timerPaused,
-  dutchMode,
+  allowDutch,
   guessInputRef,
   languageLabel,
   showLanguageChip,
@@ -74,12 +76,24 @@ export default function WordRoundPanel({
         languageLabel={languageLabel}
         showLanguageChip={showLanguageChip}
       />
+      {allowDutch && (
+        <p className={panelStyles.note}>
+          Dutch word lists automatically enable the IJ-aware input flow.
+        </p>
+      )}
       <GuessGrid
         guesses={guessRows}
         wordLength={activeRound.wordLength}
         maxRows={maxAttempts}
         sessionPaused={timerPaused}
       />
+      <div className={panelStyles.timerSection}>
+        <TimerDisplay
+          remainingMs={remainingTimeMs}
+          onToggle={onToggleTimer}
+          paused={timerPaused}
+        />
+      </div>
       {wordRoundEvent?.type === "CONTINUE" && (
         <p>
           Last guess: {wordRoundEvent.guessResult.guess}{" "}
@@ -92,7 +106,7 @@ export default function WordRoundPanel({
         onGuessChange={onGuessChange}
         onSubmitGuess={onSubmitGuess}
         disabled={phaseKind !== "WORD_ROUND"}
-        allowDutch={dutchMode ?? false}
+        allowDutch={allowDutch ?? false}
         inputRef={guessInputRef}
       />
     </div>

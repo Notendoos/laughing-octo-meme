@@ -17,8 +17,6 @@ export const Default: StoryObj<typeof SettingsModal> = {
     onClose: () => undefined,
     wordRoundSeconds: 60,
     setWordRoundSeconds: () => undefined,
-    dutchMode: true,
-    setDutchMode: () => undefined,
     maxSeconds: 90,
     timerPaused: false,
     onToggleTimerPause: () => undefined,

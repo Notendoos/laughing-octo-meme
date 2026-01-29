@@ -10,8 +10,6 @@ describe("SettingsModal", () => {
       onClose={vi.fn()}
       wordRoundSeconds={60}
       setWordRoundSeconds={vi.fn()}
-      dutchMode
-      setDutchMode={vi.fn()}
       maxSeconds={90}
       timerPaused={false}
       onToggleTimerPause={vi.fn()}

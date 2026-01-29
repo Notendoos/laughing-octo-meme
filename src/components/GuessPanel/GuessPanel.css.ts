@@ -117,13 +117,14 @@ export const grid = style({
 export const gridContainer = style({
   overflow: "hidden",
   width: "100%",
-  maxHeight: `calc(5 * 48px + 4 * 0.35rem + ${themeContract.space.xs} * 2)`,
+  maxHeight: "var(--guess-grid-height, 320px)",
+  height: "var(--guess-grid-height, 320px)",
   padding: `${themeContract.space.xs} 0`,
   boxSizing: "border-box",
 });
 
 export const rowsWrapper = style({
-  transition: "transform 0.2s ease",
+  willChange: "transform",
 });
 
 export const gridBlurred = style({
@@ -186,4 +187,11 @@ export const footer = style({
 export const queueText = style({
   color: themeContract.color.subtext,
   fontSize: "0.9rem",
+});
+
+export const note = style({
+  fontSize: "0.8rem",
+  color: themeContract.color.subtext,
+  margin: `${themeContract.space.xs} 0 ${themeContract.space.sm}`,
+  textAlign: "center",
 });

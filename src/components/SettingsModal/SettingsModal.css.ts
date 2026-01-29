@@ -17,7 +17,7 @@ export const panel = style({
   maxHeight: "min(calc(100vh - 3rem), 90vh)",
   background: themeContract.color.surface,
   borderRadius: themeContract.radius.lg,
-  padding: themeContract.space.lg,
+  padding: `${themeContract.space.lg} ${themeContract.space.xl}`,
   boxShadow: themeContract.effect.windowGlow,
   border: `1px solid ${themeContract.color.border}`,
   display: "flex",
@@ -60,6 +60,38 @@ export const section = style({
   padding: themeContract.space.sm,
   borderRadius: themeContract.radius.md,
   background: themeContract.color.surfaceAlt,
+});
+
+export const sectionBody = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: themeContract.space.sm,
+  padding: themeContract.space.sm,
+  borderRadius: themeContract.radius.md,
+  background: themeContract.color.overlay,
+});
+
+export const sectionSubtext = style({
+  fontSize: "0.8rem",
+  color: themeContract.color.subtext,
+});
+
+export const select = style({
+  width: "100%",
+  borderRadius: themeContract.radius.md,
+  border: `1px solid ${themeContract.color.borderLight}`,
+  background: themeContract.color.surface,
+  color: themeContract.color.text,
+  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
+  fontSize: "0.9rem",
+});
+
+export const multiSelect = style({
+  minHeight: "120px",
+  background: themeContract.color.surface,
+  borderRadius: themeContract.radius.md,
+  border: `1px solid ${themeContract.color.borderLight}`,
+  padding: themeContract.space.sm,
 });
 
 export const label = style({
@@ -183,4 +215,11 @@ export const actionRow = style({
   justifyContent: "flex-end",
   gap: themeContract.space.sm,
   marginTop: themeContract.space.sm,
+});
+
+export const note = style({
+  fontSize: "0.75rem",
+  color: themeContract.color.subtext,
+  margin: `${themeContract.space.sm} ${themeContract.space.sm} 0`,
+  textAlign: "center",
 });

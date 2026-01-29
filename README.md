@@ -6,6 +6,7 @@ WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **
 
 - Ensured the animated draw timers rely on DOM-safe handles so the pedometer-style countdown works without TypeScript glitches.
 - Fixed the confetti canvas hook to preserve the `CreateTypes` renderer and avoid Promise/typing noise when firing celebratory bursts.
+- Smoothed the Wordle-style guess grid with GSAP entrances and pedometer-fed score/bingo counters so the stack scrolls without clipping.
 
 ### Key Features
 
@@ -16,6 +17,7 @@ WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **
 - **Accessible Controls** – The settings modal provides labeled sliders and toggle buttons with distinct visual states so the duration, theme, and language selectors remain usable for keyboard/assistive-tool users.
 - **Theme Preference + Auto Mode** – Players can pin a light/dark/chroma palette or defer to their OS preference; the app persists the choice, applies WCAG-friendly tokens, and animates the theme transitions.
 - **Expanded Light Variants** – Each dark palette now has an equivalent lighter version (e.g., Classic, Ocean, Sunset light modes) so the UI can stay airy while preserving contrast pairings.
+- **Theme Showcase Story** – Storybook now includes a `Theme/Showcase` canvas that renders each chroma and retro palette with gradient cards and accent swatches so you can preview how the UI will look before toggling the setting in-app.
 - **Bonus Round** – A 10-letter word with attempts based on earlier rounds; success unlocks +500 bonus points.
 - **Visual Themes + Feedback** – `theme.css.ts` defines chroma variants; the settings modal lets players pick palettes and language word pools, plus confetti bursts celebrate bingo lines and bonus successes.
 - **Multilingual Word Pool** – Add/remove English and Dutch word sources from the modal, and every round queue / bonus word rebuilds around the selected languages (storage ensures the selection carries between sessions).
@@ -59,7 +61,10 @@ WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **
 - **Word Round Duration** – Use the settings modal slider (15–90s) and reset the session to apply new values.
 - **Dutch IJ Input** – Toggle the Dutch keyboard logic; the `GuessInputRow` merges `ij` pairs into a single tile.
 - **Themes** – Select from the “chroma” variants (Classic, Ocean, Sunset) inside the modal; the selection persists via `localStorage`.
+- **Settings Layout** – The settings modal now sports more padding, grouped controls, and dropdown pickers so the sliders, timer controls, and language list don’t feel cramped.
+- **Pause Overlay & Countdown** – Pausing a round blurs the Word panel, surfaces an overlay with the live countdown, and the timer card shows the paused state front and center so resuming feels immediate.
 - **Languages** – Add/remove the English and Dutch word pools; every round queue and bonus word will rebuild after closing the modal and resetting.
+  Selecting Dutch now automatically enables IJ-aware input, so no extra toggle is needed.
 - **Timer Controls & Reset** – Pause/resume timers in Word rounds + reset the entire game to re-run initial draws.
 
 ### Development Notes
@@ -71,7 +76,6 @@ WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **
 
 ### Outstanding Work
 
-- Complete the Wordle-style guess board scroll + pedometer animation so the grid never clips during long sessions.
 - Surface the pause/blur overlay with the `TimerDisplay` countdown and help text described in the spec.
 - Keep the settings panel/layout compact and the glassy gradients consistent across sections while polishing the Storybook/MDX coverage for newer panels (bingo, bonus, timer, custom phases).
 - Track visual regression guards and Vitest coverage whenever GSAP or new UI pieces affect layout size or input behavior.

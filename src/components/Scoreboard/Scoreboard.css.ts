@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 import { themeContract } from "../../styles/theme.css.ts";
 
 export const root = style({
@@ -29,4 +29,15 @@ export const value = style({
   fontSize: "1.2rem",
   fontWeight: 700,
   letterSpacing: "0.05rem",
+  minHeight: "1.2em",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  animation: "scoreRoll 0.45s ease",
+});
+
+globalStyle("@keyframes scoreRoll", {
+  "0%": { opacity: 0, transform: "translateY(-12px)" },
+  "60%": { opacity: 1, transform: "translateY(0)" },
+  "100%": { opacity: 1, transform: "translateY(0)" },
 });

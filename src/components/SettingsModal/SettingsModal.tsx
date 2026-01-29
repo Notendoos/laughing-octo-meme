@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { ReactElement } from "react";
+import type { ChangeEvent, ReactElement } from "react";
 import {
   Settings,
   SlidersHorizontal,
@@ -24,8 +24,6 @@ type SettingsModalProps = {
   onClose: () => void;
   wordRoundSeconds: number;
   setWordRoundSeconds: (value: number) => void;
-  dutchMode: boolean;
-  setDutchMode: (value: boolean) => void;
   maxSeconds: number;
   timerPaused: boolean;
   onToggleTimerPause: () => void;
@@ -43,8 +41,6 @@ export function SettingsModal({
   onClose,
   wordRoundSeconds,
   setWordRoundSeconds,
-  dutchMode,
-  setDutchMode,
   maxSeconds,
   timerPaused,
   onToggleTimerPause,
@@ -56,6 +52,18 @@ export function SettingsModal({
   selectedLanguages,
   onToggleLanguage,
 }: SettingsModalProps): ReactElement | null {
+  const handleThemeSelect = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value as ThemeKey;
+    onThemePreferenceChange(value);
+  };
+
+  const handleLanguageSelect = (event: ChangeEvent<HTMLSelectElement>) => {
+    const value = event.target.value as LanguageKey;
+    if (value) {
+      onToggleLanguage(value);
+      event.target.selectedIndex = 0;
+    }
+  };
   if (!open) {
     return null;
   }
@@ -77,70 +85,81 @@ export function SettingsModal({
         </header>
 
         <div className={styles.panelInner}>
-          <div className={styles.section}>
-            <span className={styles.label}>
-              <SlidersHorizontal size={16} /> Word round duration
-            </span>
-          <input
-            type="range"
-            className={styles.slider}
-            min={15}
-            max={maxSeconds}
-            value={wordRoundSeconds}
-            onChange={(event) => setWordRoundSeconds(Number(event.target.value))}
-          />
-          <p>
-            Each round now lasts {wordRoundSeconds}s (max {maxSeconds}s). Reset to
-            apply.
-          </p>
-          </div>
-
-          <div className={styles.section}>
-            <span className={styles.label}>
-              <SlidersHorizontal size={16} /> Dutch IJ input
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <SlidersHorizontal size={16} /> Word round duration
           </span>
-          <div className={styles.toggleRow}>
-            <p>{dutchMode ? "Enabled" : "Disabled"}</p>
-            <Button variant="ghost" onClick={() => setDutchMode(!dutchMode)}>
-              Toggle
-            </Button>
-          </div>
-          </div>
-
-          <div className={styles.section}>
-            <span className={styles.label}>
-              <Pause size={16} /> Timer controls
-          </span>
-          <div className={styles.toggleRow}>
-            <p>{timerStatusText}</p>
-            <Button variant="ghost" onClick={onToggleTimerPause}>
-              {timerPaused ? "Resume" : "Pause"}
-            </Button>
-          </div>
-          </div>
-
-          <div className={styles.section}>
-            <span className={styles.label}>
-              <Settings size={16} /> Theme preference
-          </span>
-          <div className={styles.toggleRow}>
-            <p>
-              {themePreference === "auto"
-                ? "Following your device preference"
-                : "Manual theme selection"}
+          <div className={styles.sectionBody}>
+            <input
+              type="range"
+              className={styles.slider}
+              min={15}
+              max={maxSeconds}
+              value={wordRoundSeconds}
+              onChange={(event) => setWordRoundSeconds(Number(event.target.value))}
+            />
+            <p className={styles.sectionSubtext}>
+              Each round now lasts {wordRoundSeconds}s (max {maxSeconds}s). Reset
+              to apply.
             </p>
-            <Button
-              variant={themePreference === "auto" ? "primary" : "ghost"}
-              onClick={() => onThemePreferenceChange("auto")}
-            >
-              Auto (system)
-            </Button>
           </div>
-          </div>
+        </div>
 
-          <div className={styles.section}>
-            <span className={styles.label}>
-              <Settings size={16} /> Visual themes
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <Pause size={16} /> Timer controls
+          </span>
+          <div className={styles.sectionBody}>
+            <div className={styles.toggleRow}>
+              <p>{timerStatusText}</p>
+              <Button variant="ghost" onClick={onToggleTimerPause}>
+                {timerPaused ? "Resume" : "Pause"}
+              </Button>
+            </div>
+            <p className={styles.sectionSubtext}>
+              Pause or resume word rounds without affecting your progress.
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <Settings size={16} /> Theme preference
+          </span>
+          <div className={styles.sectionBody}>
+            <div className={styles.toggleRow}>
+              <p>
+                {themePreference === "auto"
+                  ? "Following your device preference"
+                  : "Manual theme selection"}
+              </p>
+              <Button
+                variant={themePreference === "auto" ? "primary" : "ghost"}
+                onClick={() => onThemePreferenceChange("auto")}
+              >
+                Auto (system)
+              </Button>
+            </div>
+            <select
+              className={styles.select}
+              value={appliedTheme}
+              onChange={handleThemeSelect}
+            >
+              {Object.entries(chromaVariants).map(([key, variant]) => (
+                <option key={key} value={key}>
+                  {variant.label}
+                </option>
+              ))}
+            </select>
+            <p className={styles.sectionSubtext}>
+              Use the dropdown to preview the palette you want to use immediately.
+            </p>
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <Settings size={16} /> Visual themes
           </span>
           <div className={styles.themeGrid}>
             {Object.entries(chromaVariants).map(([key, variant]) => (
@@ -162,39 +181,67 @@ export function SettingsModal({
               </button>
             ))}
           </div>
-          </div>
+        </div>
 
-          <div className={styles.section}>
-            <span className={styles.label}>
-              <Globe size={16} /> Word languages
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <Globe size={16} /> Word languages
           </span>
-          <div className={styles.languageGrid}>
-            {Object.entries(languageLabels).map(([key, label]) => {
-              const langKey = key as LanguageKey;
-              const isActive = selectedLanguages.includes(langKey);
-              return (
-                <button
+          <div className={styles.sectionBody}>
+            <select
+              className={styles.select}
+              onChange={handleLanguageSelect}
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Add language…
+              </option>
+              {Object.entries(languageLabels).map(([key, label]) => (
+                <option
                   key={key}
-                  type="button"
-                  className={clsx(
-                    styles.languageOption,
-                    isActive && styles.languageOptionActive,
-                  )}
-                  onClick={() => onToggleLanguage(langKey)}
+                  value={key}
+                  disabled={selectedLanguages.includes(key as LanguageKey)}
                 >
-                  <span className={styles.languageTitle}>{label}</span>
-                  <span className={styles.languageBadge}>
-                    {isActive ? "Included" : "Add"}
-                  </span>
-                </button>
-              );
-            })}
+                  {label}
+                </option>
+              ))}
+            </select>
+            <p className={styles.sectionSubtext}>
+              Adding languages ensures the word queue pulls from those dictionaries,
+              and Dutch automatically toggles IJ input.
+            </p>
+            <div className={styles.languageGrid}>
+              {Object.entries(languageLabels).map(([key, label]) => {
+                const langKey = key as LanguageKey;
+                const isActive = selectedLanguages.includes(langKey);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={clsx(
+                      styles.languageOption,
+                      isActive && styles.languageOptionActive,
+                    )}
+                    onClick={() => onToggleLanguage(langKey)}
+                  >
+                    <span className={styles.languageTitle}>{label}</span>
+                    <span className={styles.languageBadge}>
+                      {isActive ? "Included" : "Add"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className={styles.note}>
+              Choosing Dutch automatically enables IJ-aware guesses; no additional
+              toggle is required.
+            </p>
           </div>
-          </div>
+        </div>
 
-          <div className={styles.section}>
-            <span className={styles.label}>
-              <RefreshCcw size={16} /> Quick actions
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <RefreshCcw size={16} /> Quick actions
           </span>
           <div className={styles.toggleRow}>
             <p>Reset progress and apply new settings</p>
@@ -202,7 +249,7 @@ export function SettingsModal({
               Reset
             </Button>
           </div>
-          </div>
+        </div>
         </div>
 
         <footer className={styles.actionRow}>

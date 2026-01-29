@@ -36,20 +36,28 @@ export default function Scoreboard({
       </div>
       <div className={styles.slot}>
         <p className={styles.label}>Score</p>
-        <strong className={styles.value}>{displayScore}</strong>
+        <strong key={`score-${displayScore}`} className={styles.value}>
+          {displayScore}
+        </strong>
       </div>
       <div className={styles.slot}>
         <p className={styles.label}>Balls left</p>
-        <strong className={styles.value}>{displayPool}</strong>
+        <strong key={`balls-${displayPool}`} className={styles.value}>
+          {displayPool}
+        </strong>
       </div>
       <div className={styles.slot}>
         <p className={styles.label}>Lines</p>
-        <strong className={styles.value}>{displayLines}</strong>
+        <strong key={`lines-${displayLines}`} className={styles.value}>
+          {displayLines}
+        </strong>
       </div>
       {bestScore !== undefined && (
         <div className={styles.slot}>
           <p className={styles.label}>Personal best</p>
-          <strong className={styles.value}>{displayBest}</strong>
+          <strong key={`best-${displayBest}`} className={styles.value}>
+            {displayBest}
+          </strong>
         </div>
       )}
     </section>

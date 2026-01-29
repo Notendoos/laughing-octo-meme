@@ -69,7 +69,7 @@ export const Default: Story = {
     wordRoundEvent: lastEvent,
     roundNumber: 1,
     timerPaused: false,
-    dutchMode: true,
+    allowDutch: true,
     languageLabel: "English",
     showLanguageChip: true,
   },

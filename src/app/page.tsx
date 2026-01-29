@@ -59,6 +59,7 @@ import {
   LanguageKey,
   wordCollections,
 } from "../utils/word-pool.ts";
+import { formatTimecode } from "../utils/time.ts";
 import clsx from "clsx";
 import ConfettiLayer, { type ConfettiHandle } from "../components/Confetti/Confetti.tsx";
 
@@ -180,7 +181,6 @@ export default function Page(): ReactElement {
   const [bonusGuess, setBonusGuess] = useState("");
   const [bonusMessage, setBonusMessage] = useState("");
   const [timerPaused, setTimerPaused] = useState(false);
-  const [dutchMode, setDutchMode] = useState(false);
   type ThemePreference = ThemeKey | "auto";
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
     if (typeof window === "undefined") {
@@ -629,6 +629,7 @@ export default function Page(): ReactElement {
     ? languageLabels[activeLanguageKey]
     : null;
   const showLanguageChip = multiLanguageMode && Boolean(currentLanguageLabel);
+  const dutchInputEnabled = selectedLanguages.includes("dutch");
 
   const completeCustomPhase = useCallback(() => {
     if (!isCustomPhase) {
@@ -652,6 +653,7 @@ export default function Page(): ReactElement {
   const remainingTime = activeRound
     ? Math.max(0, activeRound.timeLimitMs - activeRound.elapsedMs)
     : 0;
+  const overlayTimeString = formatTimecode(remainingTime);
 
   const bonusRound = session.appState.bonusRound;
   const roundDisplay =
@@ -767,7 +769,7 @@ export default function Page(): ReactElement {
                 wordRoundEvent={wordRoundEvent}
                 roundNumber={session.appState.roundIndex}
                 timerPaused={timerPaused}
-                dutchMode={dutchMode}
+                allowDutch={dutchInputEnabled}
                 languageLabel={currentLanguageLabel ?? undefined}
                 showLanguageChip={showLanguageChip}
                 guessInputRef={guessInputRef}
@@ -787,13 +789,14 @@ export default function Page(): ReactElement {
               </div>
             )}
           </section>
-          {showPauseOverlay && (
-            <div className={styles.pauseOverlay}>
-              <p className={styles.overlayLabel}>Session paused</p>
-              <p className={styles.overlayCaption}>
-                Tap the timer control to resume and keep guessing.
-              </p>
-            </div>
+        {showPauseOverlay && (
+          <div className={styles.pauseOverlay}>
+            <span className={styles.overlayTime}>{overlayTimeString}</span>
+            <p className={styles.overlayLabel}>Session paused</p>
+            <p className={styles.overlayCaption}>
+              Tap the timer control to resume and keep guessing.
+            </p>
+          </div>
           )}
         </div>
 
@@ -860,8 +863,6 @@ export default function Page(): ReactElement {
         onClose={() => setSettingsOpen(false)}
         wordRoundSeconds={wordRoundSeconds}
         setWordRoundSeconds={setWordRoundSeconds}
-        dutchMode={dutchMode}
-        setDutchMode={setDutchMode}
         maxSeconds={MAX_WORD_ROUND_SECONDS}
         timerPaused={timerPaused}
         onToggleTimerPause={toggleTimerPause}

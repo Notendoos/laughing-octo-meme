@@ -106,6 +106,14 @@ export const overlayCaption = style({
   color: themeContract.color.subtext,
 });
 
+export const overlayTime = style({
+  fontSize: "2.5rem",
+  fontWeight: 700,
+  fontFamily: `"Space Mono", "JetBrains Mono", monospace`,
+  letterSpacing: "0.12rem",
+  color: themeContract.color.accent,
+});
+
 export const panelHeader = style({
   display: "flex",
   justifyContent: "space-between",
