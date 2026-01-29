@@ -13,12 +13,12 @@ export const overlay = style({
 });
 
 export const panel = style({
-  width: "100%",
-  maxWidth: "520px",
-  background: themeContract.color.surface,
+  width: "min(460px, 100%)",
+  background: "rgba(7, 11, 25, 0.95)",
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.lg,
-  boxShadow: "0 25px 60px rgba(2,0,0,0.55)",
+  boxShadow: "0 35px 70px rgba(0,0,0,0.7)",
+  border: `1px solid rgba(255,255,255,0.15)`,
   position: "relative",
 });
 
@@ -30,9 +30,10 @@ export const header = style({
 });
 
 export const title = style({
-  fontSize: "1.5rem",
+  fontSize: "1.25rem",
   fontWeight: 700,
   letterSpacing: "0.08rem",
+  margin: 0,
 });
 
 export const closeButton = style({
@@ -48,6 +49,9 @@ export const section = style({
   flexDirection: "column",
   gap: themeContract.space.sm,
   marginBottom: themeContract.space.lg,
+  padding: themeContract.space.sm,
+  borderRadius: themeContract.radius.md,
+  background: "rgba(255, 255, 255, 0.02)",
 });
 
 export const label = style({
@@ -55,6 +59,9 @@ export const label = style({
   textTransform: "uppercase",
   color: themeContract.color.subtext,
   letterSpacing: "0.2rem",
+  display: "flex",
+  alignItems: "center",
+  gap: themeContract.space.xs,
 });
 
 export const slider = style({
@@ -70,35 +77,43 @@ export const toggleRow = style({
   background: "rgba(255, 255, 255, 0.04)",
 });
 
-export const toggleButton = style({
-  borderRadius: themeContract.radius.round,
-  border: `1px solid ${themeContract.color.border}`,
-  padding: `${themeContract.space.xs} ${themeContract.space.md}`,
-  cursor: "pointer",
-  fontWeight: 600,
-  background: "transparent",
+export const themeGrid = style({
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+  gap: themeContract.space.sm,
+});
+
+export const themeOption = style({
+  borderRadius: themeContract.radius.md,
+  border: `1px solid rgba(255, 255, 255, 0.15)`,
+  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
+  background: "rgba(255, 255, 255, 0.02)",
   color: themeContract.color.text,
+  cursor: "pointer",
+  textAlign: "left",
+  display: "flex",
+  flexDirection: "column",
+  gap: themeContract.space.xs,
+  transition: "border-color 0.2s ease, transform 0.2s ease",
+});
+
+export const themeOptionActive = style({
+  borderColor: themeContract.color.accent,
+  transform: "translateY(-1px)",
+});
+
+export const themeTitle = style({
+  fontWeight: 700,
+});
+
+export const themeDescription = style({
+  fontSize: "0.75rem",
+  color: themeContract.color.subtext,
 });
 
 export const actionRow = style({
   display: "flex",
   justifyContent: "flex-end",
   gap: themeContract.space.sm,
-});
-
-export const actionButton = style({
-  border: "none",
-  borderRadius: themeContract.radius.md,
-  padding: `${themeContract.space.sm} ${themeContract.space.lg}`,
-  fontWeight: 700,
-  cursor: "pointer",
-  color: "#0f172a",
-});
-
-export const primaryButton = style({
-  background: themeContract.color.accent,
-});
-
-export const secondaryButton = style({
-  background: "rgba(255, 255, 255, 0.08)",
+  marginTop: themeContract.space.sm,
 });

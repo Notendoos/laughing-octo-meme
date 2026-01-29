@@ -1,5 +1,14 @@
+import clsx from "clsx";
 import type { ReactElement } from "react";
+import {
+  Settings,
+  SlidersHorizontal,
+  RefreshCcw,
+  Pause,
+} from "lucide-react";
 import * as styles from "./SettingsModal.css.ts";
+import { Button } from "../ui/Button/Button.tsx";
+import { chromaVariants, ThemeKey } from "../../styles/theme.css.ts";
 
 type SettingsModalProps = {
   open: boolean;
@@ -13,6 +22,8 @@ type SettingsModalProps = {
   onToggleTimerPause: () => void;
   onResetSession: () => void;
   timerStatusText: string;
+  themeKey: ThemeKey;
+  onThemeChange: (value: ThemeKey) => void;
 };
 
 export function SettingsModal({
@@ -23,6 +34,12 @@ export function SettingsModal({
   dutchMode,
   setDutchMode,
   maxSeconds,
+  timerPaused,
+  onToggleTimerPause,
+  onResetSession,
+  timerStatusText,
+  themeKey,
+  onThemeChange,
 }: SettingsModalProps): ReactElement | null {
   if (!open) {
     return null;
@@ -32,7 +49,9 @@ export function SettingsModal({
     <section className={styles.overlay} role="dialog" aria-modal="true">
       <div className={styles.panel}>
         <header className={styles.header}>
-          <p className={styles.title}>Game settings</p>
+          <p className={styles.title}>
+            <Settings size={18} /> Game settings
+          </p>
           <button
             className={styles.closeButton}
             aria-label="Close settings"
@@ -43,7 +62,9 @@ export function SettingsModal({
         </header>
 
         <div className={styles.section}>
-          <span className={styles.label}>Word round duration</span>
+          <span className={styles.label}>
+            <SlidersHorizontal size={16} /> Word round duration
+          </span>
           <input
             type="range"
             className={styles.slider}
@@ -59,52 +80,69 @@ export function SettingsModal({
         </div>
 
         <div className={styles.section}>
-          <span className={styles.label}>Dutch IJ input</span>
+          <span className={styles.label}>
+            <SlidersHorizontal size={16} /> Dutch IJ input
+          </span>
           <div className={styles.toggleRow}>
             <p>{dutchMode ? "Enabled" : "Disabled"}</p>
-            <button
-              className={styles.toggleButton}
-              onClick={() => setDutchMode(!dutchMode)}
-            >
+            <Button variant="ghost" onClick={() => setDutchMode(!dutchMode)}>
               Toggle
-            </button>
+            </Button>
           </div>
         </div>
 
         <div className={styles.section}>
-          <span className={styles.label}>Timer controls</span>
+          <span className={styles.label}>
+            <Pause size={16} /> Timer controls
+          </span>
           <div className={styles.toggleRow}>
             <p>{timerStatusText}</p>
-            <button
-              className={styles.toggleButton}
-              onClick={onToggleTimerPause}
-            >
+            <Button variant="ghost" onClick={onToggleTimerPause}>
               {timerPaused ? "Resume" : "Pause"}
-            </button>
+            </Button>
           </div>
         </div>
 
         <div className={styles.section}>
-          <span className={styles.label}>Quick actions</span>
+          <span className={styles.label}>
+            <Settings size={16} /> Visual themes
+          </span>
+          <div className={styles.themeGrid}>
+            {Object.entries(chromaVariants).map(([key, variant]) => (
+              <button
+                key={key}
+                type="button"
+                className={clsx(
+                  styles.themeOption,
+                  key === themeKey && styles.themeOptionActive,
+                )}
+                onClick={() => onThemeChange(key as ThemeKey)}
+              >
+                <span className={styles.themeTitle}>{variant.label}</span>
+                <span className={styles.themeDescription}>
+                  {variant.description}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <RefreshCcw size={16} /> Quick actions
+          </span>
           <div className={styles.toggleRow}>
             <p>Reset progress and apply new settings</p>
-            <button
-              className={styles.toggleButton}
-              onClick={onResetSession}
-            >
+            <Button variant="ghost" onClick={onResetSession}>
               Reset
-            </button>
+            </Button>
           </div>
         </div>
 
         <footer className={styles.actionRow}>
-          <button
-            type="button"
-            className={`${styles.actionButton} ${styles.secondaryButton}`}
-            onClick={onClose}
-          >
+          <Button variant="ghost" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </footer>
       </div>
     </section>

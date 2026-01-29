@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { ReactElement } from "react";
 import type { LetterFeedback } from "../../engine/types.ts";
 import * as styles from "./GuessPanel.css.ts";
@@ -22,7 +23,7 @@ const padRows = (rows: GuessRow[], maxRows: number): GuessRow[] => {
   return result.slice(0, maxRows);
 };
 
-export function GuessGrid({
+function GuessGridComponent({
   guesses,
   wordLength,
   maxRows,
@@ -67,3 +68,5 @@ export function GuessGrid({
     </div>
   );
 }
+
+export const GuessGrid = memo(GuessGridComponent);

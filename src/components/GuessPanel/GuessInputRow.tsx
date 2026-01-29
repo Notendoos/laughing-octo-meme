@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
+import * as inputStyles from "./GuessInputRow.css.ts";
 
 type GuessInputRowProps = {
   wordLength: number;
@@ -145,14 +146,14 @@ export function GuessInputRow({
   };
 
   return (
-    <div className="guess-panel__inputs">
+    <div className={inputStyles.root}>
       {letters.map((letter, index) => (
         <input
           key={`letter-input-${index}`}
           ref={(el) => {
             inputsRef.current[index] = el;
           }}
-          className="guess-panel__input"
+          className={inputStyles.cellInput}
           value={letter}
           onChange={handleInput(index)}
           onKeyDown={handleKeyDown(index)}

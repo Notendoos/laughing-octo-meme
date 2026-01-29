@@ -1,3 +1,7 @@
+import type { ReactElement } from "react";
+import * as styles from "./Scoreboard.css.ts";
+import { usePedometer } from "../../hooks/usePedometer.ts";
+
 type ScoreboardProps = {
   phaseLabel: string;
   roundLabel: string | number;
@@ -14,33 +18,38 @@ export default function Scoreboard({
   ballPoolCount,
   linesCompleted,
   bestScore,
-}: ScoreboardProps) {
+}: ScoreboardProps): ReactElement {
+  const displayScore = usePedometer(totalScore);
+  const displayPool = usePedometer(ballPoolCount);
+  const displayLines = usePedometer(linesCompleted);
+  const displayBest = usePedometer(bestScore ?? 0);
+
   return (
-    <section className="scoreboard">
-      <div className="score-slot">
-        <p>Phase</p>
-        <strong>{phaseLabel}</strong>
+    <section className={styles.root}>
+      <div className={styles.slot}>
+        <p className={styles.label}>Phase</p>
+        <strong className={styles.value}>{phaseLabel}</strong>
       </div>
-      <div className="score-slot">
-        <p>Round</p>
-        <strong>{roundLabel}</strong>
+      <div className={styles.slot}>
+        <p className={styles.label}>Round</p>
+        <strong className={styles.value}>{roundLabel}</strong>
       </div>
-      <div className="score-slot">
-        <p>Total Score</p>
-        <strong>{totalScore}</strong>
+      <div className={styles.slot}>
+        <p className={styles.label}>Score</p>
+        <strong className={styles.value}>{displayScore}</strong>
       </div>
-      <div className="score-slot">
-        <p>Ball Pool</p>
-        <strong>{ballPoolCount}</strong>
+      <div className={styles.slot}>
+        <p className={styles.label}>Balls left</p>
+        <strong className={styles.value}>{displayPool}</strong>
       </div>
-      <div className="score-slot">
-        <p>Lines Scored</p>
-        <strong>{linesCompleted}</strong>
+      <div className={styles.slot}>
+        <p className={styles.label}>Lines</p>
+        <strong className={styles.value}>{displayLines}</strong>
       </div>
       {bestScore !== undefined && (
-        <div className="score-slot">
-          <p>High Score</p>
-          <strong>{bestScore}</strong>
+        <div className={styles.slot}>
+          <p className={styles.label}>Personal best</p>
+          <strong className={styles.value}>{displayBest}</strong>
         </div>
       )}
     </section>

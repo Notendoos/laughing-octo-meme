@@ -17,7 +17,7 @@ describe("Scoreboard", () => {
 
     expect(screen.getByText("Phase")).toBeDefined();
     expect(screen.getByText("Word Round 1")).toBeDefined();
-    expect(screen.getByText("Total Score")).toBeDefined();
-    expect(screen.getByText("High Score")).toBeDefined();
+    expect(screen.getByText("Score")).toBeDefined();
+    expect(screen.getByText("Personal best")).toBeDefined();
   });
 });

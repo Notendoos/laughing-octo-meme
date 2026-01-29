@@ -1,5 +1,5 @@
 import "../styles/globalStyles.css.ts";
-import { lightTheme } from "../styles/theme.css.ts";
+import { DEFAULT_THEME } from "../styles/theme.css.ts";
 import React from "react";
 import type { ReactNode } from "react";
 
@@ -16,11 +16,7 @@ export default function RootLayout({
 }): ReactNode {
   return React.createElement(
     "html",
-    { lang: "en" },
-    React.createElement(
-      "body",
-      { className: lightTheme },
-      children,
-    ),
+    { lang: "en", "data-theme": DEFAULT_THEME },
+    React.createElement("body", null, children),
   );
 }

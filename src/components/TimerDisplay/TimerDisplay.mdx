@@ -1,0 +1,13 @@
+import { Meta, Story, Canvas } from "@storybook/addon-docs";
+import { TimerDisplay } from "./TimerDisplay";
+import { Running } from "./TimerDisplay.stories";
+
+<Meta title="Timer/Timer Display" component={TimerDisplay} />
+
+# Timer Display
+
+Shows the formatted countdown and exposes a pause/resume button with an icon.
+
+<Canvas>
+  <Story name="Running" />
+</Canvas>

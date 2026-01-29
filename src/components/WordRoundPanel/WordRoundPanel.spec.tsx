@@ -29,8 +29,8 @@ describe("WordRoundPanel", () => {
     );
 
     expect(screen.getByText("Queue remaining: 1")).toBeDefined();
-    const input = screen.getByPlaceholderText("Guess the word");
-    fireEvent.change(input, { target: { value: "test" } });
+    const input = screen.getByLabelText("Letter 1");
+    fireEvent.change(input, { target: { value: "a" } });
     expect(handleChange).toHaveBeenCalled();
   });
 });

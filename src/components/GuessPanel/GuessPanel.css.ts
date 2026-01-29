@@ -101,7 +101,9 @@ export const grid = style({
 export const gridContainer = style({
   overflow: "hidden",
   width: "100%",
-  maxHeight: `calc(5 * 48px + 4 * 0.35rem)`,
+  maxHeight: `calc(5 * 48px + 4 * 0.35rem + ${themeContract.space.xs} * 2)`,
+  padding: `${themeContract.space.xs} 0`,
+  boxSizing: "border-box",
 });
 
 export const rowsWrapper = style({

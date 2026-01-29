@@ -1,4 +1,4 @@
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import * as styles from "./GuessPanel.css.ts";
 import { GuessMeter } from "./GuessMeter.tsx";
 
@@ -12,7 +12,7 @@ type GuessHeaderProps = {
   sessionPaused: boolean;
 };
 
-export function GuessHeader({
+function GuessHeader({
   roundNumber,
   remainingGuesses,
   roundActive,
@@ -25,7 +25,7 @@ export function GuessHeader({
   return (
     <div className={styles.header}>
       <div className={styles.meterRow}>
-        <GuessMeter value={remainingGuesses} label="Beurten over" />
+        <GuessMeter value={remainingGuesses} label="Beurten" />
         <GuessMeter value={roundNumber} label="Ronde" />
       </div>
       <p className={styles.modeChip}>{modeLabel}</p>
@@ -47,3 +47,5 @@ export function GuessHeader({
     </div>
   );
 }
+
+export default memo(GuessHeader);

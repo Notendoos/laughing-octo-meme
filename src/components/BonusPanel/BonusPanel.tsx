@@ -1,5 +1,7 @@
 import type { FormEventHandler } from "react";
 import type { BonusRoundState } from "../../engine/types.ts";
+import { Button } from "../ui/Button/Button.tsx";
+import * as styles from "./BonusPanel.css.ts";
 
 type BonusPanelProps = {
   bonusRound: BonusRoundState | null;
@@ -21,38 +23,39 @@ export default function BonusPanel({
   }
 
   return (
-    <div className="bonus-section">
-      <h2>Bonus Round</h2>
-      <p>
+    <div className={styles.root}>
+      <h2 className={styles.title}>Bonus Round</h2>
+      <p className={styles.info}>
         Word length: <strong>{bonusRound.wordLength}</strong> · Attempts:{" "}
         <strong>
           {bonusRound.attemptsUsed}/{bonusRound.maxAttempts}
         </strong>
       </p>
-      <form onSubmit={onSubmitGuess}>
+      <form className={styles.form} onSubmit={onSubmitGuess}>
         <label htmlFor="bonus-guess" className="sr-only">
           Enter the bonus word
         </label>
         <input
           id="bonus-guess"
+          className={styles.input}
           value={guessValue}
           onChange={(event) => onGuessChange(event.target.value)}
           placeholder="Type the bonus word"
           autoComplete="off"
         />
-        <button type="submit" disabled={!guessValue.trim()}>
+        <Button type="submit" variant="primary" disabled={!guessValue.trim()}>
           Submit
-        </button>
+        </Button>
       </form>
-      <p>{message}</p>
+      <p className={styles.message}>{message}</p>
       {bonusRound.guesses.length > 0 && (
-        <ul>
+        <div className={styles.historyList}>
           {bonusRound.guesses.map((guess, index) => (
-            <li key={`${guess.guess}-${index}`}>
+            <span key={`${guess.guess}-${index}`} className={styles.historyItem}>
               {guess.guess} · {guess.isCorrect ? "✅" : "❌"}
-            </li>
+            </span>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

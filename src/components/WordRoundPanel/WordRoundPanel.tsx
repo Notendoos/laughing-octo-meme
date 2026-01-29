@@ -1,9 +1,9 @@
 import type { ActiveWordRound } from "../../engine/types.ts";
 import type { WordRoundEvent } from "../../engine/session.ts";
 import * as panelStyles from "../GuessPanel/GuessPanel.css.ts";
-import { GuessFooter } from "../GuessPanel/GuessFooter.tsx";
+import GuessFooter from "../GuessPanel/GuessFooter.tsx";
 import { GuessGrid } from "../GuessPanel/GuessGrid.tsx";
-import { GuessHeader } from "../GuessPanel/GuessHeader.tsx";
+import GuessHeader from "../GuessPanel/GuessHeader.tsx";
 
 type WordRoundPanelProps = {
   phaseKind: string;

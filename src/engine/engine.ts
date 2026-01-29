@@ -15,6 +15,15 @@ export const BINGO_SIZE = 5;
 export const BINGO_LINE_SCORE = 200;
 export const BONUS_BASE_ATTEMPTS = 6;
 
+const shuffleArray = <T>(items: T[]): T[] => {
+  const array = [...items];
+  for (let i = array.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
 export const createWordAttempt = (
   targetWord: string,
   maxAttemptsPerWord: number
@@ -245,12 +254,23 @@ export const createBingoCard = (
   gridNumbers: number[][],
   preMarkedNumbers: number[]
 ): BingoCard => {
-  return gridNumbers.map((row) =>
-    row.map((number) => ({
+  const flattened = gridNumbers.flat();
+  const shuffled = shuffleArray(flattened);
+  const selected = shuffled.slice(0, BINGO_SIZE * BINGO_SIZE);
+
+  const card: BingoCard = [];
+  for (let row = 0; row < BINGO_SIZE; row += 1) {
+    const rowNumbers = selected.slice(
+      row * BINGO_SIZE,
+      (row + 1) * BINGO_SIZE
+    );
+    const cells = rowNumbers.map((number) => ({
       number,
       marked: preMarkedNumbers.includes(number),
-    }))
-  );
+    }));
+    card.push(cells);
+  }
+  return card;
 };
 
 export const markNumberOnCard = (
@@ -313,6 +333,7 @@ export const buildDefaultLines = (): Line[] => {
 };
 
 const defaultLines = buildDefaultLines();
+export const TOTAL_BINGO_LINES = defaultLines.length;
 
 export const isLineComplete = (line: Line, card: BingoCard): boolean => {
   return line.cells.every(
@@ -330,24 +351,46 @@ export const drawBalls = (
   scoreDelta: number;
   drawnNumbers: number[];
 } => {
-  const actualDrawCount = Math.min(ballsToDraw, state.ballPool.length);
-  const poolAfterDraw = state.ballPool.slice(actualDrawCount);
-  const drawNumbers = state.ballPool.slice(0, actualDrawCount);
+  return applyDrawNumbers(state, selectRandomNumbers(state.ballPool, ballsToDraw));
+};
 
+const selectRandomNumbers = (pool: number[], count: number) => {
+  const playPool = [...pool];
+  const result: number[] = [];
+  for (let i = 0; i < count && playPool.length > 0; i += 1) {
+    const index = Math.floor(Math.random() * playPool.length);
+    const [value] = playPool.splice(index, 1);
+    if (value !== undefined) {
+      result.push(value);
+    }
+  }
+  return result;
+};
+
+export const applyDrawNumbers = (
+  state: AppGameState,
+  drawNumbers: number[]
+): {
+  state: AppGameState;
+  ballsDrawn: number;
+  newLines: Line[];
+  scoreDelta: number;
+  drawnNumbers: number[];
+} => {
+  const filtered = drawNumbers.filter((num) => state.ballPool.includes(num));
+  const updatedPool = state.ballPool.filter((ball) => !filtered.includes(ball));
   let updatedCard = state.bingoCard;
   const completedLineIds = new Set(state.completedLines.map((line) => line.id));
   const collectedLines: Line[] = [];
   let scoreDelta = 0;
 
-  drawNumbers.forEach((ballNumber) => {
+  filtered.forEach((ballNumber) => {
     const result = markNumberOnCard(updatedCard, ballNumber);
     updatedCard = result.card;
-
     defaultLines.forEach((line) => {
       if (completedLineIds.has(line.id)) {
         return;
       }
-
       if (isLineComplete(line, updatedCard)) {
         completedLineIds.add(line.id);
         collectedLines.push(line);
@@ -359,15 +402,15 @@ export const drawBalls = (
   return {
     state: {
       ...state,
-      ballPool: poolAfterDraw,
+      ballPool: updatedPool,
       bingoCard: updatedCard,
       completedLines: [...state.completedLines, ...collectedLines],
       totalScore: state.totalScore + scoreDelta,
     },
-    ballsDrawn: actualDrawCount,
+    ballsDrawn: filtered.length,
     newLines: collectedLines,
     scoreDelta,
-    drawnNumbers: drawNumbers,
+    drawnNumbers: filtered,
   };
 };
 

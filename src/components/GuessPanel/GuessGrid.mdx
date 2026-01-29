@@ -1,0 +1,13 @@
+import { Meta, Story, Canvas } from "@storybook/addon-docs";
+import { GuessGrid } from "./GuessGrid";
+import { Default } from "./GuessGrid.stories";
+
+<Meta title="Guess Panel/Guess Grid" component={GuessGrid} />
+
+# Guess Grid
+
+The guess grid visualizes up to the configured number of attempts and scrolls as new rows enter. Use `letterFeedback` to simulate Wordle-style statuses (correct/present/absent).
+
+<Canvas>
+  <Story name="Default" />
+</Canvas>

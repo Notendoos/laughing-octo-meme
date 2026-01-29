@@ -1,5 +1,6 @@
-import type { ReactElement } from "react";
+import { memo, type ReactElement } from "react";
 import { GuessInputRow } from "./GuessInputRow.tsx";
+import { Button } from "../ui/Button/Button.tsx";
 
 type GuessFooterProps = {
   queueRemaining: number;
@@ -10,7 +11,7 @@ type GuessFooterProps = {
   allowDutch?: boolean;
 };
 
-export function GuessFooter({
+function GuessFooter({
   queueRemaining,
   currentGuess,
   onGuessChange,
@@ -29,14 +30,16 @@ export function GuessFooter({
         disabled={disabled}
         allowDutch={allowDutch}
       />
-      <button
+      <Button
         type="button"
-        className="guess-panel__submit"
+        variant="primary"
         onClick={onSubmitGuess}
         disabled={disabled || !currentGuess.trim()}
       >
         Submit
-      </button>
+      </Button>
     </div>
   );
 }
+
+export default memo(GuessFooter);

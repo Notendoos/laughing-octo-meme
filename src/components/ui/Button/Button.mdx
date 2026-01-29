@@ -1,0 +1,22 @@
+import { Meta, Story, Props, Preview, StoryStory } from "@storybook/addon-docs/blocks";
+import { Button } from "./Button";
+
+<Meta title="UI/Buttons/Button" component={Button} />
+
+## Button
+
+`Button` is a reusable control with `primary` and `ghost` variants driven by Vanilla Extract styles.
+
+<Preview>
+  <Story name="Primary">
+    <Button variant="primary">Primary</Button>
+  </Story>
+</Preview>
+
+<Preview>
+  <Story name="Ghost">
+    <Button variant="ghost">Ghost</Button>
+  </Story>
+</Preview>
+
+<Props of={Button} />

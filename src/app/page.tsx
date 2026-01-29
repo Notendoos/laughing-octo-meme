@@ -9,7 +9,12 @@ import {
   type ReactElement,
 } from "react";
 import { gsap } from "gsap";
-import { drawBalls } from "../engine/engine.ts";
+import {
+  applyDrawNumbers,
+  drawBalls,
+  createBingoCard,
+  TOTAL_BINGO_LINES,
+} from "../engine/engine.ts";
 import {
   applyBonusGuess,
   advancePhase,
@@ -29,8 +34,13 @@ import BingoGrid from "../components/BingoGrid/BingoGrid.tsx";
 import Scoreboard from "../components/Scoreboard/Scoreboard.tsx";
 import WordRoundPanel from "../components/WordRoundPanel/WordRoundPanel.tsx";
 import { SettingsModal } from "../components/SettingsModal/SettingsModal.tsx";
+import { TimerDisplay } from "../components/TimerDisplay/TimerDisplay.tsx";
+import { Settings as SettingsIcon } from "lucide-react";
+import { Button } from "../components/ui/Button/Button.tsx";
 import { buildRoundQueue, sampleBonusWord } from "../utils/word-queue.ts";
 import { readBestScore, writeBestScore } from "../utils/local-store.ts";
+import * as styles from "./page.css.ts";
+import { chromaVariants, DEFAULT_THEME, ThemeKey } from "../styles/theme.css.ts";
 
 const GRID_NUMBERS = Array.from({ length: 5 }, (_, row) =>
   Array.from({ length: 5 }, (_, col) => row * 5 + col + 1)
@@ -41,7 +51,33 @@ const MIN_WORD_ROUND_SECONDS = 5;
 const MAX_WORD_ROUND_SECONDS = 90;
 const WORDS_PER_ROUND = 3;
 
-const PRE_MARKED_NUMBERS = [2, 6, 9, 11, 13, 17, 20, 24];
+const PRE_MARKED_NUMBERS: number[] = [];
+const INITIAL_DRAW_COUNT = 8;
+const THEME_STORAGE_KEY = "wordingo-theme";
+
+const waitMs = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const array = [...items];
+  for (let i = array.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
+
+const createRandomBallPool = (): number[] => {
+  const pool = Array.from({ length: 75 }, (_, index) => index + 1);
+  for (let i = pool.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool;
+};
+
+// const waitMs = (ms: number): Promise<void> =>
+//   new Promise((resolve) => setTimeout(resolve, ms));
 
 const PHASE_SEQUENCE: GameSessionConfig["phaseSequence"] = [
   { id: "setup", kind: "SETUP", label: "Setup" },
@@ -69,7 +105,7 @@ const buildWordRoundConfigs = (baseSeconds: number) => {
   return timeWindows.map((timeLimitMs, index) => ({
     timeLimitMs,
     wordLength: 5,
-    maxAttemptsPerWord: 2,
+    maxAttemptsPerWord: 5,
     wordQueue: buildRoundQueue(index, WORDS_PER_ROUND),
   }));
 };
@@ -84,21 +120,30 @@ const createSessionConfig = (baseSeconds: number): GameSessionConfig => ({
 });
 
 export default function Page(): ReactElement {
-  const sessionConfigRef = useRef(
-    createSessionConfig(DEFAULT_WORD_ROUND_SECONDS)
-  );
-  const [wordRoundSeconds, setWordRoundSeconds] = useState(
-    DEFAULT_WORD_ROUND_SECONDS
-  );
-  const [session, setSession] = useState<GameSession>(() =>
-    createGameSession(sessionConfigRef.current)
-  );
-  const [currentGuess, setCurrentGuess] = useState("");
-  const [bonusGuess, setBonusGuess] = useState("");
-  const [bonusMessage, setBonusMessage] = useState("");
-  const [timerPaused, setTimerPaused] = useState(false);
-  const [dutchMode, setDutchMode] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const initialSessionConfig = createSessionConfig(DEFAULT_WORD_ROUND_SECONDS);
+const sessionConfigRef = useRef(initialSessionConfig);
+const [wordRoundSeconds, setWordRoundSeconds] = useState(
+  DEFAULT_WORD_ROUND_SECONDS
+);
+const [session, setSession] = useState<GameSession>(() =>
+  createGameSession(initialSessionConfig)
+);
+const [currentGuess, setCurrentGuess] = useState("");
+const [bonusGuess, setBonusGuess] = useState("");
+const [bonusMessage, setBonusMessage] = useState("");
+const [timerPaused, setTimerPaused] = useState(false);
+const [dutchMode, setDutchMode] = useState(false);
+const [activeTheme, setActiveTheme] = useState<ThemeKey>(() => {
+  if (typeof window === "undefined") {
+    return DEFAULT_THEME;
+  }
+  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored && stored in chromaVariants) {
+    return stored as ThemeKey;
+  }
+  return DEFAULT_THEME;
+});
+const [settingsOpen, setSettingsOpen] = useState(false);
   const [wordRoundEvent, setWordRoundEvent] = useState<WordRoundEvent | null>(
     null
   );
@@ -106,34 +151,158 @@ export default function Page(): ReactElement {
     null
   );
   const [bestScore, setBestScore] = useState(() => readBestScore());
+  const [animatedDrawNumbers, setAnimatedDrawNumbers] = useState<number[]>([]);
+  const [initialDrawRunning, setInitialDrawRunning] = useState(false);
+  const drawAnimationTimers =
+    useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const sessionRef = useRef(session);
+  const initialDrawPerformedRef = useRef(false);
+
+  const updateBestScoreIfHigher = useCallback((score: number) => {
+    setBestScore((current) => {
+      if (score > current) {
+        writeBestScore(score);
+        return score;
+      }
+      return current;
+    });
+  }, []);
+
+  const commitSession = useCallback(
+    (nextSession: GameSession) => {
+      setSession(nextSession);
+      updateBestScoreIfHigher(nextSession.appState.totalScore);
+    },
+    [updateBestScoreIfHigher],
+  );
+
+  const commitSessionUpdate = useCallback(
+    (updater: (current: GameSession) => GameSession) => {
+      setSession((current) => {
+        const next = updater(current);
+        updateBestScoreIfHigher(next.appState.totalScore);
+        return next;
+      });
+    },
+    [updateBestScoreIfHigher],
+  );
+
+  const clearDrawAnimation = useCallback(() => {
+    drawAnimationTimers.current.forEach((timer) => clearTimeout(timer));
+    drawAnimationTimers.current = [];
+  }, []);
+
+  const playDrawAnimation = useCallback(
+    (numbers: number[]) => {
+      clearDrawAnimation();
+      setAnimatedDrawNumbers([]);
+      numbers.forEach((value, index) => {
+        const timer = window.setTimeout(() => {
+          setAnimatedDrawNumbers((current) => [...current, value]);
+        }, index * 260);
+        drawAnimationTimers.current.push(timer);
+      });
+    },
+    [clearDrawAnimation],
+  );
+
+  useEffect(() => {
+    return () => {
+      clearDrawAnimation();
+    };
+  }, [clearDrawAnimation]);
 
   useEffect(() => {
     sessionRef.current = session;
   }, [session]);
 
   useEffect(() => {
-    const currentScore = session.appState.totalScore;
-    if (currentScore > bestScore) {
-      writeBestScore(currentScore);
-      setBestScore(currentScore);
+    if (typeof window === "undefined") {
+      return;
     }
-  }, [bestScore, session.appState.totalScore]);
+    document.documentElement.setAttribute("data-theme", activeTheme);
+    window.localStorage.setItem(THEME_STORAGE_KEY, activeTheme);
+  }, [activeTheme]);
+
+  const startInitialDraw = useCallback(async () => {
+    if (initialDrawPerformedRef.current) {
+      return;
+    }
+    initialDrawPerformedRef.current = true;
+    setInitialDrawRunning(true);
+
+    const currentSession = sessionRef.current;
+    const cardNumbers = currentSession.appState.bingoCard.flatMap((row) =>
+      row.map((cell) => cell.number)
+    );
+    const poolSet = new Set(currentSession.appState.ballPool);
+    const available = cardNumbers.filter((number) => poolSet.has(number));
+    const shuffled = shuffleArray(available);
+    const initialDraw = shuffled.slice(0, INITIAL_DRAW_COUNT);
+    const drawResult = applyDrawNumbers(currentSession.appState, initialDraw);
+
+    commitSession({
+      ...currentSession,
+      appState: drawResult.state,
+    });
+    setBallDrawReport({
+      drawnNumbers: drawResult.drawnNumbers,
+      lines: drawResult.newLines,
+      scoreDelta: drawResult.scoreDelta,
+    });
+    playDrawAnimation(drawResult.drawnNumbers);
+
+    const totalAnimationMs = Math.max(
+      1000,
+      drawResult.drawnNumbers.length * 200
+    );
+    await waitMs(totalAnimationMs);
+    clearDrawAnimation();
+    setBallDrawReport(null);
+    setInitialDrawRunning(false);
+    setTimerPaused(false);
+    commitSessionUpdate((current) => advancePhase(current));
+  }, [
+    commitSession,
+    commitSessionUpdate,
+    playDrawAnimation,
+    clearDrawAnimation,
+  ]);
 
   useEffect(() => {
     sessionConfigRef.current = createSessionConfig(wordRoundSeconds);
   }, [wordRoundSeconds]);
 
   const resetSession = () => {
-    setSession(createGameSession(sessionConfigRef.current));
+    commitSession(createGameSession(sessionConfigRef.current));
     setWordRoundEvent(null);
+    clearDrawAnimation();
     setBallDrawReport(null);
     setBonusMessage("");
     setCurrentGuess("");
     setBonusGuess("");
     setTimerPaused(false);
+    initialDrawPerformedRef.current = false;
+    setInitialDrawRunning(false);
   };
+
+  const resetBingoBoard = useCallback(() => {
+    const newPool = createRandomBallPool();
+    const newCard = createBingoCard(GRID_NUMBERS, PRE_MARKED_NUMBERS);
+    commitSessionUpdate((current) => ({
+      ...current,
+      appState: {
+        ...current.appState,
+        bingoCard: newCard,
+        ballPool: newPool,
+        completedLines: [],
+      },
+    }));
+    clearDrawAnimation();
+    setBallDrawReport(null);
+    initialDrawPerformedRef.current = false;
+  }, [commitSessionUpdate, clearDrawAnimation]);
 
   const finalizeBallDraw = useCallback(
     (candidate: GameSession, event: WordRoundEvent): GameSession => {
@@ -147,12 +316,13 @@ export default function Page(): ReactElement {
         lines: drawResult.newLines,
         scoreDelta: drawResult.scoreDelta,
       });
+      playDrawAnimation(drawResult.drawnNumbers);
       return completeBallDraw({
         ...candidate,
         appState: drawResult.state,
       });
     },
-    [setBallDrawReport]
+    [playDrawAnimation, setBallDrawReport]
   );
 
   const applyWordRoundUpdate = useCallback(
@@ -160,7 +330,7 @@ export default function Page(): ReactElement {
       if (update.event?.type === "COMPLETE") {
         setWordRoundEvent(update.event);
         const finished = finalizeBallDraw(update.session, update.event);
-        setSession(finished);
+        commitSession(finished);
         return;
       }
 
@@ -168,9 +338,9 @@ export default function Page(): ReactElement {
         setWordRoundEvent(update.event);
       }
 
-      setSession(update.session);
+      commitSession(update.session);
     },
-    [finalizeBallDraw]
+    [finalizeBallDraw, commitSession]
   );
 
   useEffect(() => {
@@ -212,6 +382,7 @@ export default function Page(): ReactElement {
   }, [
     session.appState.phaseKind,
     session.appState.roundIndex,
+    session.appState.activeWordRound,
     applyWordRoundUpdate,
     timerPaused,
   ]);
@@ -287,15 +458,15 @@ export default function Page(): ReactElement {
       );
     }
 
-    setSession(nextSession);
+    commitSession(nextSession);
     setBonusGuess("");
   };
 
   const startGame = () => {
     setWordRoundEvent(null);
     setBallDrawReport(null);
-    setTimerPaused(false);
-    setSession((current) => advancePhase(current));
+    setTimerPaused(true);
+    startInitialDraw();
   };
 
   const toggleTimerPause = () => {
@@ -334,44 +505,68 @@ export default function Page(): ReactElement {
   const roundDurations = `${wordRoundSeconds}s / ${wordRoundSeconds + 1}s / ${
     wordRoundSeconds + 2
   }s`;
+  const completedLineCount = session.appState.completedLines.length;
+  const hasBingo = completedLineCount > 0;
+  const bingoExhausted = completedLineCount >= TOTAL_BINGO_LINES;
 
   return (
-    <div className="app-shell">
-      <header className="card">
-        <Scoreboard
-          phaseLabel={phaseLabel}
-          roundLabel={roundDisplay}
-          totalScore={session.appState.totalScore}
-          ballPoolCount={session.appState.ballPool.length}
-          linesCompleted={session.appState.completedLines.length}
-          bestScore={bestScore}
-        />
+    <div className={styles.shell}>
+      <header className={styles.header}>
+        <div className={styles.headerPanel}>
+          <Scoreboard
+            phaseLabel={phaseLabel}
+            roundLabel={roundDisplay}
+            totalScore={session.appState.totalScore}
+            ballPoolCount={session.appState.ballPool.length}
+            linesCompleted={session.appState.completedLines.length}
+            bestScore={bestScore}
+          />
+        </div>
+        <div className={styles.headerActions}>
+          <div className={styles.timerWrapper}>
+            <TimerDisplay
+              remainingMs={remainingTime}
+              onToggle={toggleTimerPause}
+              paused={timerPaused}
+            />
+          </div>
+          <div className={styles.settingsRow}>
+            <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
+              <SettingsIcon size={16} />
+              Settings
+            </Button>
+            <Button variant="ghost" onClick={resetSession}>
+              Reset
+            </Button>
+          </div>
+        </div>
       </header>
 
-        <section className="card">
-          <h2>Settings</h2>
-          <p className="sv-text-muted">
-            Everything that controls timing, Dutch inputs, and pauses lives in
-            the modal.
-          </p>
-          <div className="timer-controls">
-            <button
-              type="button"
-              onClick={() => setSettingsOpen(true)}
-              className="guess-panel__submit"
-            >
-              Open settings
-            </button>
+      <main className={styles.main}>
+        <section className={`${styles.panel} ${styles.primaryPanel}`}>
+          <div className={styles.panelHeader}>
+            <div>
+              <p className={styles.panelLabel}>Word Round</p>
+              <h2 className={styles.panelTitle}>{phaseLabel}</h2>
+            </div>
+            <div className={styles.buttonGroup}>
+              {phaseKind === "SETUP" && (
+                <Button
+                  variant="primary"
+                  onClick={startGame}
+                  disabled={initialDrawRunning}
+                >
+                  {initialDrawRunning ? "Drawing balls…" : "Start Session"}
+                </Button>
+              )}
+            </div>
           </div>
-        </section>
-
-      <section className="card panel-grid">
-        <div>
-          <h2>Word Round</h2>
-          {phaseKind === "SETUP" && (
-            <button onClick={startGame}>Start Round 1</button>
-          )}
-          {phaseKind === "WORD_ROUND" && activeRound && (
+          {ballDrawReport ? (
+            <BallDrawPanel
+              report={ballDrawReport}
+              displayNumbers={animatedDrawNumbers}
+            />
+          ) : phaseKind === "WORD_ROUND" && activeRound ? (
             <WordRoundPanel
               phaseKind={phaseKind}
               activeRound={activeRound}
@@ -386,39 +581,55 @@ export default function Page(): ReactElement {
               timerPaused={timerPaused}
               dutchMode={dutchMode}
             />
+          ) : (
+            <div className={styles.placeholder}>
+              {phaseKind === "SETUP" ? (
+                <p className={styles.helperText}>
+                  Configure the timers and start a session to begin the timed word
+                  rounds.
+                </p>
+              ) : (
+                <p className={styles.helperText}>
+                  Awaiting the next phase.
+                </p>
+              )}
+            </div>
           )}
-          {phaseKind === "BALL_DRAW" && ballDrawReport && (
-            <BallDrawPanel report={ballDrawReport} />
-          )}
-        </div>
-        <div>
-          <h2>Bingo Board</h2>
-          <BingoGrid card={session.appState.bingoCard} />
-        </div>
-      </section>
+        </section>
 
-      <section className="card">
-        {ballDrawReport && (
-          <div>
-            <h3>Last Draw</h3>
+        <section className={`${styles.panel} ${styles.secondaryPanel}`}>
+          <div className={styles.panelHeader}>
+            <div>
+              <p className={styles.panelLabel}>Bingo</p>
+              <h3 className={styles.panelTitle}>Bingo board</h3>
+            </div>
+          </div>
+          <BingoGrid card={session.appState.bingoCard} />
+          <div className={styles.ballSummary}>
             <p>
-              Balls drawn: {ballDrawReport.drawnNumbers.length} · Score +{" "}
-              {ballDrawReport.scoreDelta}
+              Ball pool: {session.appState.ballPool.length} remaining
             </p>
-            {ballDrawReport.lines.length > 0 ? (
-              <ul>
-                {ballDrawReport.lines.map((line) => (
-                  <li key={line.id}>{line.id}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No new lines this draw.</p>
+            {ballDrawReport && (
+              <p>
+                Last draw: {ballDrawReport.drawnNumbers.length} balls · +{" "}
+                {ballDrawReport.scoreDelta}
+              </p>
+            )}
+            {hasBingo && !bingoExhausted && (
+              <Button variant="ghost" onClick={resetBingoBoard}>
+                Reset bingo card
+              </Button>
+            )}
+            {bingoExhausted && (
+              <p className={styles.helperText}>
+                All {TOTAL_BINGO_LINES} lines complete — no more bingo bonuses.
+              </p>
             )}
           </div>
-        )}
-      </section>
+        </section>
+      </main>
 
-      <section className="card">
+      <section className={styles.bonusPanel}>
         {phaseKind === "BONUS_WORD" && bonusRound ? (
           <BonusPanel
             bonusRound={bonusRound}
@@ -428,15 +639,22 @@ export default function Page(): ReactElement {
             message={bonusMessage}
           />
         ) : phaseKind === "GAME_OVER" ? (
-          <div className="game-over">
-            <h2>Game Over</h2>
-            <p>Total Score: {session.appState.totalScore}</p>
-            <button onClick={resetSession}>Play again</button>
+          <div>
+            <h2 className={styles.panelTitle}>Game Over</h2>
+            <p className={styles.helperText}>
+              Total Score: {session.appState.totalScore}
+            </p>
+            <Button variant="primary" onClick={resetSession}>
+              Play again
+            </Button>
           </div>
         ) : (
-          <p>Complete the word rounds to unlock the 10-letter bonus.</p>
+          <p className={styles.helperText}>
+            Complete the final word rounds to unlock the bonus challenge.
+          </p>
         )}
       </section>
+
       <SettingsModal
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -449,6 +667,8 @@ export default function Page(): ReactElement {
         onToggleTimerPause={toggleTimerPause}
         onResetSession={resetSession}
         timerStatusText={timerStatusText}
+        themeKey={activeTheme}
+        onThemeChange={(value) => setActiveTheme(value)}
       />
     </div>
   ) as ReactElement;

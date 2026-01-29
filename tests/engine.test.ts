@@ -1,6 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
-  createBingoCard,
   drawBalls,
   initializeWordRound,
   processWordGuess,
@@ -56,15 +55,18 @@ describe("Engine - timed word round progression", () => {
 
 describe("Engine - bingo ball draw", () => {
   it("marks balls, completes a line, and awards score", () => {
-    const gridNumbers = Array.from({ length: 5 }, (_, row) =>
-      Array.from({ length: 5 }, (_, col) => row * 5 + col + 1)
+    const card = Array.from({ length: 5 }, (_, row) =>
+      Array.from({ length: 5 }, (_, col) => ({
+        number: row * 5 + col + 1,
+        marked: false,
+      }))
     );
 
     const state: AppGameState = {
       phase: "SETUP",
       roundIndex: 1,
       totalScore: 0,
-      bingoCard: createBingoCard(gridNumbers, []),
+      bingoCard: card,
       ballPool: [1, 2, 3, 4, 5, 6, 7],
       completedLines: [],
       wordRoundResults: [],
@@ -72,7 +74,9 @@ describe("Engine - bingo ball draw", () => {
       bonusRound: null,
     };
 
+    const randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
     const drawOutcome = drawBalls(state, 5);
+    randomSpy.mockRestore();
 
     expect(drawOutcome.ballsDrawn).toBe(5);
     expect(drawOutcome.drawnNumbers).toEqual([1, 2, 3, 4, 5]);

@@ -10,7 +10,7 @@ describe("BallDrawPanel", () => {
       />
     );
 
-    expect(screen.getByText("Ball draw in progress…")).toBeDefined();
+    expect(screen.getByText("Ball draw report")).toBeDefined();
     expect(screen.getByText("1")).toBeDefined();
   });
 });
