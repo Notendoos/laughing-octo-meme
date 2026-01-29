@@ -62,7 +62,10 @@ WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **
 - **Dutch IJ Input** – Toggle the Dutch keyboard logic; the `GuessInputRow` merges `ij` pairs into a single tile.
 - **Themes** – Select from the “chroma” variants (Classic, Ocean, Sunset) inside the modal; the selection persists via `localStorage`.
 - **Settings Layout** – The settings modal now sports more padding, grouped controls, and dropdown pickers so the sliders, timer controls, and language list don’t feel cramped.
-- **Pause Overlay & Countdown** – Pausing a round blurs the Word panel, surfaces an overlay with the live countdown, and the timer card shows the paused state front and center so resuming feels immediate.
+- **Timer Placement** – The countdown lives inside the Word Round panel now, next to the Guess grid, so the paused state plays well with that blurred overlay and sits next to the guesses.
+- **Glassy Scoreboard** – The scoreboard now shares the same gradient/card shell as the main panels so every section uses a consistent glassy surface and glow.
+- **Bonus Round UI** – The 10-letter bonus phase reuses the Guess grid and input row so it feels identical to regular rounds, while attempts remaining and history stay in sync with the engine state.
+- **Bonus Unlock Progress** – The bonus phase now requires a minimum score/word count to unlock, and the bonus panel shows a progress bar indicating how close you are to hitting that threshold before the 10-letter word becomes playable.
 - **Languages** – Add/remove the English and Dutch word pools; every round queue and bonus word will rebuild after closing the modal and resetting.
   Selecting Dutch now automatically enables IJ-aware input, so no extra toggle is needed.
 - **Timer Controls & Reset** – Pause/resume timers in Word rounds + reset the entire game to re-run initial draws.

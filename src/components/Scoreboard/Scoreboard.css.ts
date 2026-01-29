@@ -3,8 +3,13 @@ import { themeContract } from "../../styles/theme.css.ts";
 
 export const root = style({
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
   gap: themeContract.space.sm,
+  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
+  borderRadius: themeContract.radius.lg,
+  background: `linear-gradient(135deg, ${themeContract.color.gradientStart}, ${themeContract.color.gradientEnd})`,
+  border: `1px solid ${themeContract.color.border}`,
+  boxShadow: themeContract.effect.cardGlow,
 });
 
 export const slot = style({

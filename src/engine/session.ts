@@ -13,6 +13,7 @@ import {
   processWordGuess,
   updateWordRoundElapsed,
 } from "./engine";
+import { computeBonusProgress } from "../utils/bonus-unlock";
 
 export type WordRoundEvent =
   | {
@@ -74,8 +75,14 @@ const applyPhaseDefinition = (
     return session;
   }
 
+  const progress = computeBonusProgress(
+    session.appState,
+    session.config.bonusUnlock
+  );
+
   let activeWordRound = null;
   let bonusRound: BonusRoundState | null = session.appState.bonusRound;
+  let bonusLocked = session.appState.bonusLocked ?? false;
   let roundIndex = session.appState.roundIndex;
 
   if (nextDefinition.kind === "WORD_ROUND") {
@@ -84,13 +91,17 @@ const applyPhaseDefinition = (
     activeWordRound = initializeWordRound(roundConfig);
     roundIndex = configIndex + 1;
   } else if (nextDefinition.kind === "BONUS_WORD") {
-    bonusRound = createBonusRoundState(
-      session.config.bonusWord,
-      session.appState.wordRoundResults
-    );
+    bonusLocked = !progress.unlocked;
+    bonusRound = bonusLocked
+      ? null
+      : createBonusRoundState(
+          session.config.bonusWord,
+          session.appState.wordRoundResults
+        );
   } else if (nextDefinition.kind === "SETUP") {
     activeWordRound = null;
     bonusRound = null;
+    bonusLocked = false;
     roundIndex = 0;
   } else if (nextDefinition.kind === "BALL_DRAW") {
     activeWordRound = null;
@@ -107,6 +118,8 @@ const applyPhaseDefinition = (
       activeWordRound,
       bonusRound,
       roundIndex,
+      bonusLocked,
+      bonusProgress: progress,
     },
   };
 };

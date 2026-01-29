@@ -78,6 +78,17 @@ export type BonusRoundState = {
   solved: boolean;
 };
 
+export type BonusProgress = {
+  currentScore: number;
+  targetScore: number;
+  currentWords: number;
+  targetWords: number;
+  scorePercent: number;
+  wordPercent: number;
+  overallPercent: number;
+  unlocked: boolean;
+};
+
 export type CustomPhaseMetadata = {
   description?: string;
   actionLabel?: string;
@@ -130,6 +141,8 @@ export type AppGameState = {
   wordRoundResults: WordRoundResult[];
   activeWordRound: ActiveWordRound | null;
   bonusRound: BonusRoundState | null;
+  bonusLocked?: boolean;
+  bonusProgress?: BonusProgress | null;
 };
 
 export type GameSessionConfig = {
@@ -139,6 +152,10 @@ export type GameSessionConfig = {
   wordRoundConfigs: WordRoundConfig[];
   bonusWord: string;
   phaseSequence: PhaseDefinition[];
+  bonusUnlock?: {
+    minScore?: number;
+    minCorrectWords?: number;
+  };
 };
 
 export type GameSession = {

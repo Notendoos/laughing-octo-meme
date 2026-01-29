@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type FormEvent,
   type ReactElement,
 } from "react";
 import { gsap } from "gsap";
@@ -41,7 +40,6 @@ import WordRoundPanel from "../components/WordRoundPanel/WordRoundPanel.tsx";
 import type { GuessInputRowHandle } from "../components/GuessPanel/GuessInputRow.tsx";
 import { CustomPhasePanel } from "../components/CustomPhase/CustomPhasePanel.tsx";
 import { SettingsModal } from "../components/SettingsModal/SettingsModal.tsx";
-import { TimerDisplay } from "../components/TimerDisplay/TimerDisplay.tsx";
 import { Settings as SettingsIcon } from "lucide-react";
 import { Button } from "../components/ui/Button/Button.tsx";
 import { buildRoundQueue, sampleBonusWord } from "../utils/word-queue.ts";
@@ -59,6 +57,7 @@ import {
   LanguageKey,
   wordCollections,
 } from "../utils/word-pool.ts";
+import { computeBonusProgress } from "../utils/bonus-unlock.ts";
 import { formatTimecode } from "../utils/time.ts";
 import clsx from "clsx";
 import ConfettiLayer, { type ConfettiHandle } from "../components/Confetti/Confetti.tsx";
@@ -76,6 +75,10 @@ const PRE_MARKED_NUMBERS: number[] = [];
 const INITIAL_DRAW_COUNT = 8;
 const THEME_STORAGE_KEY = "wordingo-theme";
 const LANGUAGE_STORAGE_KEY = "wordingo-languages";
+const BONUS_UNLOCK_REQUIREMENTS = {
+  minCorrectWords: 6,
+  minScore: 800,
+};
 
 const waitMs = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -163,6 +166,7 @@ const createSessionConfig = (
   wordRoundConfigs: buildWordRoundConfigs(baseSeconds, languages),
   phaseSequence: PHASE_SEQUENCE,
   bonusWord: sampleBonusWord(languages),
+  bonusUnlock: BONUS_UNLOCK_REQUIREMENTS,
 });
 
 export default function Page(): ReactElement {
@@ -237,7 +241,7 @@ export default function Page(): ReactElement {
   const [bestScore, setBestScore] = useState(() => readBestScore());
   const [animatedDrawNumbers, setAnimatedDrawNumbers] = useState<number[]>([]);
   const [initialDrawRunning, setInitialDrawRunning] = useState(false);
-  type TimerId = ReturnType<typeof window.setTimeout>;
+  type TimerId = ReturnType<typeof globalThis.setTimeout>;
   const drawAnimationTimers = useRef<TimerId[]>([]);
   const confettiRef = useRef<ConfettiHandle | null>(null);
 
@@ -274,7 +278,7 @@ export default function Page(): ReactElement {
   );
 
   const clearDrawAnimation = useCallback(() => {
-    drawAnimationTimers.current.forEach((timer) => window.clearTimeout(timer));
+    drawAnimationTimers.current.forEach((timer) => globalThis.clearTimeout(timer));
     drawAnimationTimers.current = [];
   }, []);
 
@@ -283,7 +287,7 @@ export default function Page(): ReactElement {
       clearDrawAnimation();
       setAnimatedDrawNumbers([]);
       numbers.forEach((value, index) => {
-        const timer = window.setTimeout(() => {
+        const timer = globalThis.setTimeout(() => {
           setAnimatedDrawNumbers((current) => [...current, value]);
         }, index * 260);
         drawAnimationTimers.current.push(timer);
@@ -548,8 +552,7 @@ export default function Page(): ReactElement {
     guessInputRef.current?.focusFirstEmpty();
   };
 
-  const handleBonusSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleBonusSubmit = () => {
     if (!bonusGuess.trim()) {
       return;
     }
@@ -656,6 +659,12 @@ export default function Page(): ReactElement {
   const overlayTimeString = formatTimecode(remainingTime);
 
   const bonusRound = session.appState.bonusRound;
+  const computedBonusProgress =
+    session.appState.bonusProgress ??
+    computeBonusProgress(session.appState, session.config.bonusUnlock);
+  const bonusLocked =
+    session.appState.bonusLocked ??
+    (computedBonusProgress.unlocked ? false : true);
   const roundDisplay =
     phaseKind === "BONUS_WORD"
       ? "Bonus"
@@ -689,34 +698,27 @@ export default function Page(): ReactElement {
     <div className={styles.shell}>
       <ConfettiLayer ref={confettiRef} />
       <header className={styles.header}>
-        <div className={styles.headerPanel}>
-          <Scoreboard
-            phaseLabel={phaseLabel}
-            roundLabel={roundDisplay}
-            totalScore={session.appState.totalScore}
-            ballPoolCount={session.appState.ballPool.length}
-            linesCompleted={session.appState.completedLines.length}
-            bestScore={bestScore}
-          />
-        </div>
-        <div className={styles.headerActions}>
-          <div className={styles.timerWrapper}>
-            <TimerDisplay
-              remainingMs={remainingTime}
-              onToggle={toggleTimerPause}
-              paused={timerPaused}
+          <div className={styles.headerPanel}>
+            <Scoreboard
+              phaseLabel={phaseLabel}
+              roundLabel={roundDisplay}
+              totalScore={session.appState.totalScore}
+              ballPoolCount={session.appState.ballPool.length}
+              linesCompleted={session.appState.completedLines.length}
+              bestScore={bestScore}
             />
           </div>
-          <div className={styles.settingsRow}>
-            <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
-              <SettingsIcon size={16} />
-              Settings
-            </Button>
-            <Button variant="ghost" onClick={resetSession}>
-              Reset
-            </Button>
+          <div className={styles.headerActions}>
+            <div className={styles.settingsRow}>
+              <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
+                <SettingsIcon size={16} />
+                Settings
+              </Button>
+              <Button variant="ghost" onClick={resetSession}>
+                Reset
+              </Button>
+            </div>
           </div>
-        </div>
       </header>
 
       <main className={styles.main}>
@@ -757,23 +759,24 @@ export default function Page(): ReactElement {
                 displayNumbers={animatedDrawNumbers}
               />
             ) : phaseKind === "WORD_ROUND" && activeRound ? (
-              <WordRoundPanel
-                phaseKind={phaseKind}
-                activeRound={activeRound}
-                queueRemaining={activeRound.wordQueue.length}
-                timerProgress={timerProgress}
-                remainingTimeMs={remainingTime}
-                currentGuess={currentGuess}
-                onGuessChange={setCurrentGuess}
-                onSubmitGuess={handleSubmitGuess}
-                wordRoundEvent={wordRoundEvent}
-                roundNumber={session.appState.roundIndex}
-                timerPaused={timerPaused}
-                allowDutch={dutchInputEnabled}
-                languageLabel={currentLanguageLabel ?? undefined}
-                showLanguageChip={showLanguageChip}
-                guessInputRef={guessInputRef}
-              />
+            <WordRoundPanel
+              phaseKind={phaseKind}
+              activeRound={activeRound}
+              queueRemaining={activeRound.wordQueue.length}
+              timerProgress={timerProgress}
+              remainingTimeMs={remainingTime}
+              currentGuess={currentGuess}
+              onGuessChange={setCurrentGuess}
+              onSubmitGuess={handleSubmitGuess}
+              wordRoundEvent={wordRoundEvent}
+              roundNumber={session.appState.roundIndex}
+              timerPaused={timerPaused}
+              allowDutch={dutchInputEnabled}
+              languageLabel={currentLanguageLabel ?? undefined}
+              showLanguageChip={showLanguageChip}
+              guessInputRef={guessInputRef}
+              onToggleTimer={toggleTimerPause}
+            />
             ) : (
               <div className={styles.placeholder}>
                 {phaseKind === "SETUP" ? (
@@ -833,13 +836,15 @@ export default function Page(): ReactElement {
       </main>
 
       <section className={styles.bonusPanel}>
-        {phaseKind === "BONUS_WORD" && bonusRound ? (
+        {phaseKind === "BONUS_WORD" ? (
           <BonusPanel
             bonusRound={bonusRound}
-            guessValue={bonusGuess}
+            currentGuess={bonusGuess}
             onGuessChange={setBonusGuess}
             onSubmitGuess={handleBonusSubmit}
             message={bonusMessage}
+            bonusLocked={bonusLocked}
+            bonusProgress={computedBonusProgress}
           />
         ) : phaseKind === "GAME_OVER" ? (
           <div>

@@ -31,10 +31,6 @@ export const headerActions = style({
   minWidth: "260px",
 });
 
-export const timerWrapper = style({
-  width: "100%",
-});
-
 export const settingsRow = style({
   display: "flex",
   gap: themeContract.space.sm,

@@ -189,6 +189,10 @@ export const queueText = style({
   fontSize: "0.9rem",
 });
 
+export const timerSection = style({
+  width: "100%",
+});
+
 export const note = style({
   fontSize: "0.8rem",
   color: themeContract.color.subtext,

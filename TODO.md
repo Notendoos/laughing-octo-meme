@@ -11,8 +11,20 @@
 
 - [x] Refine the Wordle-style guess board scroll/animation so it never clips (use GSAP entrances + pedometer effects for numeric changes).
 - [x] Implement the pause blur overlay + countdown `TimerDisplay` interaction described in the spec.
-- [ ] Revisit the layout to keep settings panel more compact and the glassy gradients consistent across sections.
-- [ ] Add pedometer-style animation to the countdown/timer display so numeric jumps feel smooth alongside the blur overlay.
+- [x] Revisit the layout to keep settings panel more compact and the glassy gradients consistent across sections.
+- [x] Add pedometer-style animation to the countdown/timer display so numeric jumps feel smooth alongside the blur overlay.
+
+## Stretch
+
+- [ ] Explore custom mini-games between rounds (e.g., trivia break tied to `CUSTOM` phase entries).
+- [ ] Allow players to upload their own word lists (currently there’s JSON data but no UI for uploads).
+- [ ] Add accessibility audit (focus traps inside modal, aria descriptions for the bingo grid and timer).
+
+## Ongoing Improvements
+
+- [ ] Ensure the primary workspace remains responsive so the Word/Bingo panels never shrink below ~320px on narrow devices.
+- [ ] Add descriptive tooltips for scoreboard stats and phase chips to make the pacing/score visible to new players.
+- [ ] Document visual regression guards (e.g., Storybook snapshots for GuessGrid, TimerDisplay) when touching GSAP-driven layout.
 
 ## Documentation & Testing
 
@@ -20,9 +32,3 @@
 - [ ] Add visual regression guards if/when adding GSAP-based transitions that affect layout size.
 - [ ] Keep Vitest coverage in sync each time a new input/feedback component is introduced to avoid regressions.
 - [x] Audit accessibility of current screens and integrate Radix UI primitives (dialogs, focus traps) where it improves semantics/focus management.
-
-## Stretch
-
-- [ ] Explore custom mini-games between rounds (e.g., trivia break tied to `CUSTOM` phase entries).
-- [ ] Allow players to upload their own word lists (currently there’s JSON data but no UI for uploads).
-- [ ] Add accessibility audit (focus traps inside modal, aria descriptions for the bingo grid and timer).

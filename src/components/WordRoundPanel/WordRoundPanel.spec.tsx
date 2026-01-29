@@ -29,6 +29,7 @@ describe("WordRoundPanel", () => {
         timerPaused={false}
         languageLabel="English"
         showLanguageChip
+        onToggleTimer={vi.fn()}
       />
     );
 

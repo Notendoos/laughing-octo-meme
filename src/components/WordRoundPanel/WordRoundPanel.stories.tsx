@@ -70,6 +70,7 @@ export const Default: Story = {
     roundNumber: 1,
     timerPaused: false,
     allowDutch: true,
+    onToggleTimer: () => {},
     languageLabel: "English",
     showLanguageChip: true,
   },

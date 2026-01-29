@@ -133,8 +133,14 @@ function GuessGridComponent({
           <div key={`row-${rowIndex}`} className={styles.row} data-row={rowIndex}>
             {Array.from({ length: wordLength }, (_, cellIndex) => {
               const letter = row.guess?.[cellIndex] ?? "";
-              const status = row.letterFeedback?.[cellIndex] ?? "";
-              const statusClass = status ? status : letter ? "absent" : "empty";
+              const rawStatus = row.letterFeedback?.[cellIndex] ?? "";
+              const mappedStatus =
+                rawStatus === "exact" ? "correct" : rawStatus || "";
+              const statusClass = mappedStatus
+                ? mappedStatus
+                : letter
+                ? "absent"
+                : "empty";
               return (
                 <span
                   key={`cell-${rowIndex}-${cellIndex}`}

@@ -40,6 +40,7 @@ export default function WordRoundPanel({
   roundNumber,
   timerPaused,
   allowDutch,
+  onToggleTimer,
   guessInputRef,
   languageLabel,
   showLanguageChip,

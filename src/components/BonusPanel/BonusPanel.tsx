@@ -1,61 +1,117 @@
-import type { FormEventHandler } from "react";
-import type { BonusRoundState } from "../../engine/types.ts";
-import { Button } from "../ui/Button/Button.tsx";
+import type { BonusProgress, BonusRoundState } from "../../engine/types.ts";
+import GuessFooter from "../GuessPanel/GuessFooter.tsx";
+import { GuessGrid } from "../GuessPanel/GuessGrid.tsx";
 import * as styles from "./BonusPanel.css.ts";
 
 type BonusPanelProps = {
   bonusRound: BonusRoundState | null;
-  guessValue: string;
+  currentGuess: string;
   onGuessChange: (value: string) => void;
-  onSubmitGuess: FormEventHandler<HTMLFormElement>;
+  onSubmitGuess: () => void;
   message: string;
+  bonusLocked?: boolean;
+  bonusProgress?: BonusProgress | null;
 };
 
 export default function BonusPanel({
   bonusRound,
-  guessValue,
+  currentGuess,
   onGuessChange,
   onSubmitGuess,
   message,
+  bonusLocked = false,
+  bonusProgress = null,
 }: BonusPanelProps) {
-  if (!bonusRound) {
-    return null;
-  }
+  const attemptsLeft = bonusRound
+    ? Math.max(0, bonusRound.maxAttempts - bonusRound.attemptsUsed)
+    : 0;
+  const guessRows = bonusRound
+    ? bonusRound.guesses.map((guess) => ({
+        guess: guess.guess,
+        letterFeedback: guess.letterFeedback,
+      }))
+    : [];
+
+  const progressPercent = Math.round((bonusProgress?.overallPercent ?? 0) * 100);
+  const targetScore = bonusProgress?.targetScore ?? 0;
+  const targetWords = bonusProgress?.targetWords ?? 0;
 
   return (
     <div className={styles.root}>
-      <h2 className={styles.title}>Bonus Round</h2>
-      <p className={styles.info}>
-        Word length: <strong>{bonusRound.wordLength}</strong> · Attempts:{" "}
-        <strong>
-          {bonusRound.attemptsUsed}/{bonusRound.maxAttempts}
-        </strong>
-      </p>
-      <form className={styles.form} onSubmit={onSubmitGuess}>
-        <label htmlFor="bonus-guess" className="sr-only">
-          Enter the bonus word
-        </label>
-        <input
-          id="bonus-guess"
-          className={styles.input}
-          value={guessValue}
-          onChange={(event) => onGuessChange(event.target.value)}
-          placeholder="Type the bonus word"
-          autoComplete="off"
-        />
-        <Button type="submit" variant="primary" disabled={!guessValue.trim()}>
-          Submit
-        </Button>
-      </form>
-      <p className={styles.message}>{message}</p>
-      {bonusRound.guesses.length > 0 && (
-        <div className={styles.historyList}>
-          {bonusRound.guesses.map((guess, index) => (
-            <span key={`${guess.guess}-${index}`} className={styles.historyItem}>
-              {guess.guess} · {guess.isCorrect ? "✅" : "❌"}
+      <h2 className={styles.title}>
+        {bonusLocked ? "Bonus Locked" : "Bonus Round"}
+      </h2>
+      {bonusLocked ? (
+        <>
+          <p className={styles.info}>
+            Unlock the bonus by reaching{" "}
+            <strong>{targetWords} correct words</strong>{" "}
+            {targetScore > 0 && (
+              <>
+                and <strong>{targetScore} points</strong>
+              </>
+            )}
+            .
+          </p>
+          <div className={styles.progressTrack}>
+            <div
+              className={styles.progressFill}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className={styles.progressLabel}>
+            <span>
+              Words: {bonusProgress?.currentWords ?? 0}/{targetWords}
             </span>
-          ))}
-        </div>
+            <span>
+              Score: {bonusProgress?.currentScore ?? 0}/{targetScore}
+            </span>
+          </p>
+          {message && <p className={styles.message}>{message}</p>}
+          {!bonusRound && (
+            <p className={styles.info}>
+              Keep playing the word rounds to unlock the final 10-letter challenge.
+            </p>
+          )}
+        </>
+      ) : bonusRound ? (
+        <>
+          <p className={styles.info}>
+            Word length: <strong>{bonusRound.wordLength}</strong> · Attempts remaining:{" "}
+            <strong>{attemptsLeft}</strong>
+          </p>
+          <GuessGrid
+            guesses={guessRows}
+            wordLength={bonusRound.wordLength}
+            maxRows={bonusRound.maxAttempts}
+            sessionPaused={false}
+          />
+          <div className={styles.footer}>
+            <GuessFooter
+              queueRemaining={attemptsLeft}
+              queueLabel="Attempts remaining"
+              currentGuess={currentGuess}
+              onGuessChange={onGuessChange}
+              onSubmitGuess={onSubmitGuess}
+              disabled={bonusRound.solved}
+              wordLength={bonusRound.wordLength}
+            />
+          </div>
+          <p className={styles.message}>{message}</p>
+          {bonusRound.guesses.length > 0 && (
+            <div className={styles.historyList}>
+              {bonusRound.guesses.map((guess, index) => (
+                <span key={`${guess.guess}-${index}`} className={styles.historyItem}>
+                  {guess.guess} · {guess.isCorrect ? "✅" : "❌"}
+                </span>
+              ))}
+            </div>
+          )}
+        </>
+      ) : (
+        <p className={styles.info}>
+          Bonus requirements not met yet. Keep chasing the words and points.
+        </p>
       )}
     </div>
   );

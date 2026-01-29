@@ -11,6 +11,8 @@ type GuessFooterProps = {
   disabled?: boolean;
   allowDutch?: boolean;
   inputRef?: Ref<GuessInputRowHandle>;
+  wordLength?: number;
+  queueLabel?: string;
 };
 
 function GuessFooter({
@@ -21,12 +23,17 @@ function GuessFooter({
   disabled = false,
   allowDutch = false,
   inputRef,
+  wordLength = 5,
+  queueLabel,
 }: GuessFooterProps): ReactElement {
+  const label = queueLabel ?? "Queue remaining";
   return (
     <div>
-      <p className="sv-text-muted">Queue remaining: {queueRemaining}</p>
+      <p className="sv-text-muted">
+        {label}: {queueRemaining}
+      </p>
       <GuessInputRow
-        wordLength={5}
+        wordLength={wordLength ?? 5}
         value={currentGuess}
         onChange={onGuessChange}
         onSubmit={onSubmitGuess}

@@ -22,38 +22,13 @@ export const info = style({
   color: themeContract.color.subtext,
 });
 
-export const form = style({
-  display: "flex",
-  gap: themeContract.space.sm,
-  flexWrap: "wrap",
-  alignItems: "center",
-});
-
-export const input = style({
-  flex: "1 1 100%",
-  borderRadius: themeContract.radius.md,
-  border: `2px solid ${themeContract.color.borderLight}`,
-  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
-  background: themeContract.color.surface,
-  color: themeContract.color.text,
-  fontSize: "1rem",
-  fontWeight: 700,
-  letterSpacing: "0.12rem",
-  textTransform: "uppercase",
-  boxShadow: `inset 0 1px 0 ${themeContract.color.overlay}`,
-  transition: "border 0.2s ease, box-shadow 0.2s ease",
-  selectors: {
-    "&:focus-visible": {
-      border: `2px solid ${themeContract.color.accent}`,
-      outline: "none",
-      boxShadow: `0 0 0 3px ${themeContract.color.overlay}`,
-    },
-  },
-});
-
 export const message = style({
   color: themeContract.color.subtext,
   fontSize: "0.9rem",
+});
+
+export const footer = style({
+  marginTop: themeContract.space.sm,
 });
 
 export const historyList = style({
@@ -68,4 +43,28 @@ export const historyItem = style({
   borderRadius: themeContract.radius.md,
   background: themeContract.color.surface,
   border: `1px solid ${themeContract.color.borderLight}`,
+});
+
+export const progressTrack = style({
+  width: "100%",
+  height: "8px",
+  borderRadius: themeContract.radius.round,
+  background: themeContract.color.overlay,
+  overflow: "hidden",
+  border: `1px solid ${themeContract.color.borderLight}`,
+});
+
+export const progressFill = style({
+  height: "100%",
+  borderRadius: themeContract.radius.round,
+  background: `linear-gradient(120deg, ${themeContract.color.accentLight}, ${themeContract.color.accent})`,
+  transition: "width 0.35s ease",
+});
+
+export const progressLabel = style({
+  fontSize: "0.75rem",
+  color: themeContract.color.subtext,
+  marginTop: themeContract.space.xs,
+  display: "flex",
+  justifyContent: "space-between",
 });

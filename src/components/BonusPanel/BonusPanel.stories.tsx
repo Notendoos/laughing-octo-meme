@@ -20,7 +20,7 @@ export const Default: Story = {
       guesses: [],
       solved: false,
     },
-    guessValue: "",
+    currentGuess: "fireproof",
     onGuessChange: () => {},
     onSubmitGuess: () => {},
     message: "Good luck!",
