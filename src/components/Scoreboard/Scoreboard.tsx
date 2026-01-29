@@ -4,6 +4,7 @@ type ScoreboardProps = {
   totalScore: number;
   ballPoolCount: number;
   linesCompleted: number;
+  bestScore?: number;
 };
 
 export default function Scoreboard({
@@ -12,6 +13,7 @@ export default function Scoreboard({
   totalScore,
   ballPoolCount,
   linesCompleted,
+  bestScore,
 }: ScoreboardProps) {
   return (
     <section className="scoreboard">
@@ -35,6 +37,12 @@ export default function Scoreboard({
         <p>Lines Scored</p>
         <strong>{linesCompleted}</strong>
       </div>
+      {bestScore !== undefined && (
+        <div className="score-slot">
+          <p>High Score</p>
+          <strong>{bestScore}</strong>
+        </div>
+      )}
     </section>
   );
 }

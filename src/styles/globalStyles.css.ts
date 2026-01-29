@@ -60,6 +60,18 @@ globalStyle(".guess-form button", {
   cursor: "pointer",
 });
 
+globalStyle(".timer-slider", {
+  width: "100%",
+  marginTop: themeContract.space.sm,
+});
+
+globalStyle(".timer-controls", {
+  display: "flex",
+  gap: themeContract.space.sm,
+  flexWrap: "wrap",
+  margin: `${themeContract.space.sm} 0`,
+});
+
 globalStyle(".ball-draw-list", {
   display: "flex",
   flexWrap: "wrap",
@@ -118,6 +130,87 @@ globalStyle(".progress-bar", {
   background: "linear-gradient(120deg, #facc15, #ea580c)",
 });
 
+globalStyle(".guess-panel__input", {
+  width: "3.2rem",
+  height: "3.2rem",
+  borderRadius: themeContract.radius.md,
+  border: "2px solid rgba(255, 255, 255, 0.25)",
+  background: "rgba(255, 255, 255, 0.04)",
+  color: themeContract.color.text,
+  fontSize: "1.1rem",
+  fontWeight: 700,
+  textAlign: "center",
+  letterSpacing: "0.12rem",
+  transition: "border 0.2s ease, background 0.2s ease",
+});
+
+globalStyle(".guess-panel__input:focus-visible", {
+  borderColor: themeContract.color.accent,
+  outline: "none",
+  background: "rgba(250, 204, 21, 0.12)",
+});
+
+globalStyle(".guess-panel__submit", {
+  minWidth: "140px",
+  padding: `${themeContract.space.sm} ${themeContract.space.lg}`,
+  borderRadius: themeContract.radius.sm,
+  border: "none",
+  fontWeight: 700,
+  letterSpacing: "0.05rem",
+  background: themeContract.color.accent,
+  color: "#0f172a",
+  cursor: "pointer",
+  transition: "transform 0.2s ease, background 0.2s ease",
+});
+
+globalStyle(".guess-panel__submit:hover:enabled", {
+  transform: "translateY(-1px)",
+  background: themeContract.color.accentStrong,
+});
+
+globalStyle(".guess-panel__submit:disabled", {
+  opacity: 0.5,
+  cursor: "not-allowed",
+});
+
+globalStyle(".guess-history", {
+  marginTop: themeContract.space.sm,
+  display: "flex",
+  flexDirection: "column",
+  gap: themeContract.space.xs,
+});
+
+globalStyle(".letter-row", {
+  display: "flex",
+  gap: themeContract.space.xs,
+});
+
+globalStyle(".letter-cell", {
+  width: "32px",
+  height: "32px",
+  borderRadius: themeContract.radius.sm,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 700,
+  border: `1px solid ${themeContract.color.border}`,
+});
+
+globalStyle(".letter-exact", {
+  background: themeContract.color.accent,
+  color: "#0f172a",
+});
+
+globalStyle(".letter-present", {
+  background: themeContract.color.info,
+  color: "#fff",
+});
+
+globalStyle(".letter-absent", {
+  background: themeContract.color.surface,
+  color: themeContract.color.text,
+});
+
 globalStyle(".bonus-section", {
   display: "flex",
   flexDirection: "column",
@@ -171,11 +264,10 @@ globalStyle(".sr-only", {
   overflow: "hidden",
 });
 
-globalStyle("@media (max-width: 640px)", {
-  ".guess-form": {
-    flexDirection: "column",
-  },
-  ".bonus-section form": {
-    flexDirection: "column",
-  },
+globalStyle("@media (max-width: 640px) .guess-form", {
+  flexDirection: "column",
+});
+
+globalStyle("@media (max-width: 640px) .bonus-section form", {
+  flexDirection: "column",
 });

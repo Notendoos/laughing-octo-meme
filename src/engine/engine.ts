@@ -3,6 +3,7 @@ import {
   AppGameState,
   BingoCard,
   BonusRoundState,
+  LetterFeedback,
   Line,
   WordAttemptState,
   WordRoundConfig,
@@ -24,6 +25,46 @@ export const createWordAttempt = (
   guesses: [],
   solved: false,
 });
+
+export const computeLetterFeedback = (
+  guess: string,
+  targetWord: string
+): LetterFeedback[] => {
+  const normalizedGuess = guess.toLowerCase();
+  const normalizedTarget = targetWord.toLowerCase();
+  const counts: Record<string, number> = {};
+  for (const char of normalizedTarget) {
+    counts[char] = (counts[char] ?? 0) + 1;
+  }
+
+  const feedback: LetterFeedback[] = [];
+
+  // first pass exact matches
+  for (let i = 0; i < normalizedGuess.length; i += 1) {
+    const guessChar = normalizedGuess[i];
+    if (normalizedTarget[i] === guessChar) {
+      feedback.push("exact");
+      counts[guessChar] -= 1;
+    } else {
+      feedback.push("absent");
+    }
+  }
+
+  // second pass for present letters
+  for (let i = 0; i < normalizedGuess.length; i += 1) {
+    const guessChar = normalizedGuess[i];
+    if (feedback[i] === "exact") {
+      continue;
+    }
+
+    if (counts[guessChar] > 0) {
+      feedback[i] = "present";
+      counts[guessChar] -= 1;
+    }
+  }
+
+  return feedback;
+};
 
 export const advanceToNextWord = (
   round: ActiveWordRound
@@ -74,25 +115,31 @@ export const processWordGuess = (
         guess,
         isCorrect: false,
         timestampMs,
+        letterFeedback: [],
       },
       solved: false,
     };
   }
 
-  const normalizedGuess = guess.trim().toLowerCase();
-  const normalizedTarget = round.currentWord.targetWord.toLowerCase();
-  const isCorrect = normalizedGuess === normalizedTarget;
+  const normalizedGuess = guess.trim();
+  const normalizedTarget = round.currentWord.targetWord;
+  const rawGuess = normalizedGuess.toLowerCase();
+  const rawTarget = normalizedTarget.toLowerCase();
+  const isCorrect = rawGuess === rawTarget;
+
+  const letterFeedback = computeLetterFeedback(guess, round.currentWord.targetWord);
 
   const updatedWord: WordAttemptState = {
     ...round.currentWord,
     attemptsUsed: round.currentWord.attemptsUsed + 1,
     guesses: [
       ...round.currentWord.guesses,
-      {
-        guess,
-        isCorrect,
-        timestampMs,
-      },
+        {
+          guess,
+          isCorrect,
+          timestampMs,
+          letterFeedback,
+        },
     ],
     solved: isCorrect,
   };
@@ -123,6 +170,7 @@ export const processWordGuess = (
     guess,
     isCorrect,
     timestampMs,
+    letterFeedback,
   };
 
   const shouldEnd =

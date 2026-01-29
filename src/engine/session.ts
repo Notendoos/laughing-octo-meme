@@ -286,6 +286,7 @@ export const applyBonusGuess = (
         guess,
         isCorrect,
         timestampMs,
+        letterFeedback: [],
       },
     ],
     solved: isCorrect,
@@ -300,6 +301,7 @@ export const applyBonusGuess = (
     guess,
     isCorrect,
     timestampMs,
+    letterFeedback: [],
   };
 
   if (isCorrect) {

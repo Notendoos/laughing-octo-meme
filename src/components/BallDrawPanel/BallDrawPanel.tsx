@@ -1,4 +1,4 @@
-import type { Line } from "../../engine/types";
+import type { Line } from "../../engine/types.ts";
 
 export type BallDrawReport = {
   drawnNumbers: number[];

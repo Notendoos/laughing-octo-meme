@@ -17,5 +17,6 @@ export const Default: Story = {
     totalScore: 320,
     ballPoolCount: 45,
     linesCompleted: 2,
+    bestScore: 800,
   },
 };

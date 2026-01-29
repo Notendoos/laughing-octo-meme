@@ -21,10 +21,13 @@ export type Line = {
   cells: { row: number; col: number }[];
 };
 
+export type LetterFeedback = "exact" | "present" | "absent";
+
 export type GuessResult = {
   guess: string;
   isCorrect: boolean;
   timestampMs: number;
+  letterFeedback: LetterFeedback[];
 };
 
 export type WordAttemptState = {

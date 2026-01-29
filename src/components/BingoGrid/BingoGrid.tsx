@@ -1,4 +1,4 @@
-import type { BingoCard } from "../../engine/types";
+import type { BingoCard } from "../../engine/types.ts";
 
 type BingoGridProps = {
   card: BingoCard;

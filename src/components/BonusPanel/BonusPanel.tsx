@@ -1,5 +1,5 @@
 import type { FormEventHandler } from "react";
-import type { BonusRoundState } from "../../engine/types";
+import type { BonusRoundState } from "../../engine/types.ts";
 
 type BonusPanelProps = {
   bonusRound: BonusRoundState | null;

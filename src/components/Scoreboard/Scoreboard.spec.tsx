@@ -11,11 +11,13 @@ describe("Scoreboard", () => {
         totalScore={420}
         ballPoolCount={30}
         linesCompleted={3}
+        bestScore={500}
       />
     );
 
     expect(screen.getByText("Phase")).toBeDefined();
     expect(screen.getByText("Word Round 1")).toBeDefined();
     expect(screen.getByText("Total Score")).toBeDefined();
+    expect(screen.getByText("High Score")).toBeDefined();
   });
 });

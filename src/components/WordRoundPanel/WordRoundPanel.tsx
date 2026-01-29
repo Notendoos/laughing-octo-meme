@@ -1,6 +1,9 @@
-import type { FormEventHandler } from "react";
-import type { ActiveWordRound } from "../../engine/types";
-import type { WordRoundEvent } from "../../engine/session";
+import type { ActiveWordRound } from "../../engine/types.ts";
+import type { WordRoundEvent } from "../../engine/session.ts";
+import * as panelStyles from "../GuessPanel/GuessPanel.css.ts";
+import { GuessFooter } from "../GuessPanel/GuessFooter.tsx";
+import { GuessGrid } from "../GuessPanel/GuessGrid.tsx";
+import { GuessHeader } from "../GuessPanel/GuessHeader.tsx";
 
 type WordRoundPanelProps = {
   phaseKind: string;
@@ -10,11 +13,15 @@ type WordRoundPanelProps = {
   remainingTimeMs: number;
   currentGuess: string;
   onGuessChange: (value: string) => void;
-  onSubmitGuess: FormEventHandler<HTMLFormElement>;
+  onSubmitGuess: () => void;
   wordRoundEvent: WordRoundEvent | null;
+  roundNumber: number;
+  timerPaused: boolean;
+  dutchMode?: boolean;
 };
 
 export default function WordRoundPanel({
+  phaseKind,
   activeRound,
   queueRemaining,
   timerProgress,
@@ -23,43 +30,60 @@ export default function WordRoundPanel({
   onGuessChange,
   onSubmitGuess,
   wordRoundEvent,
+  roundNumber,
+  timerPaused,
+  dutchMode,
 }: WordRoundPanelProps) {
   if (!activeRound) {
     return null;
   }
 
+  const guessHistory = activeRound.currentWord?.guesses ?? [];
+  const guessRows = guessHistory.map((guess) => ({
+    guess: guess.guess,
+    letterFeedback: guess.letterFeedback,
+  }));
+  const maxAttempts =
+    activeRound.currentWord?.maxAttempts ?? activeRound.maxAttemptsPerWord;
+  const remainingGuesses = activeRound.currentWord
+    ? Math.max(
+        0,
+        activeRound.currentWord.maxAttempts -
+          (activeRound.currentWord.attemptsUsed ?? 0)
+      )
+    : maxAttempts;
+
   return (
-    <div>
-      <div className="progress-track">
-        <div
-          className="progress-bar"
-          style={{ width: `${timerProgress}%` }}
-        />
-      </div>
-      <p>Time left: {Math.max(0, Math.ceil(remainingTimeMs / 1000))}s</p>
-      <p>
-        Correct this round: <strong>{activeRound.correctWordCount}</strong>
-      </p>
+    <div className={panelStyles.panel}>
+      <GuessHeader
+        roundNumber={roundNumber}
+        remainingGuesses={Math.max(0, remainingGuesses)}
+        roundActive={phaseKind === "WORD_ROUND"}
+        timerProgress={timerProgress}
+        remainingTimeMs={remainingTimeMs}
+        correctWordCount={activeRound.correctWordCount}
+        sessionPaused={timerPaused}
+      />
+      <GuessGrid
+        guesses={guessRows}
+        wordLength={activeRound.wordLength}
+        maxRows={maxAttempts}
+        sessionPaused={timerPaused}
+      />
       {wordRoundEvent?.type === "CONTINUE" && (
         <p>
           Last guess: {wordRoundEvent.guessResult.guess}{" "}
           {wordRoundEvent.guessResult.isCorrect ? "✅" : "❌"}
         </p>
       )}
-      <form className="guess-form" onSubmit={onSubmitGuess}>
-        <label htmlFor="word-guess" className="sr-only">
-          Guess a word
-        </label>
-        <input
-          id="word-guess"
-          value={currentGuess}
-          onChange={(event) => onGuessChange(event.target.value)}
-          placeholder="Guess the word"
-          autoComplete="off"
-        />
-        <button type="submit">Submit</button>
-      </form>
-      <p>Queue remaining: {queueRemaining}</p>
+      <GuessFooter
+        queueRemaining={queueRemaining}
+        currentGuess={currentGuess}
+        onGuessChange={onGuessChange}
+        onSubmitGuess={onSubmitGuess}
+        disabled={phaseKind !== "WORD_ROUND"}
+        allowDutch={dutchMode ?? false}
+      />
     </div>
   );
 }
