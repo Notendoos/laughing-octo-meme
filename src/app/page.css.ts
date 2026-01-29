@@ -19,10 +19,9 @@ export const headerPanel = style({
   flex: "1 1 420px",
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.md,
-  border: `1px solid rgba(255, 255, 255, 0.2)`,
-  background:
-    "linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(8, 13, 32, 0.9))",
-  boxShadow: "0 35px 60px rgba(2, 4, 15, 0.55)",
+  border: `1px solid ${themeContract.color.borderLight}`,
+  background: `linear-gradient(135deg, ${themeContract.color.gradientStart}, ${themeContract.color.gradientEnd})`,
+  boxShadow: themeContract.effect.cardGlow,
 });
 
 export const headerActions = style({
@@ -56,10 +55,9 @@ export const main = style({
 export const panel = style({
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.lg,
-  border: `1px solid rgba(255, 255, 255, 0.2)`,
-  background:
-    "linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(6, 11, 24, 0.8))",
-  boxShadow: "0 30px 60px rgba(0, 0, 0, 0.6)",
+  border: `1px solid ${themeContract.color.borderLight}`,
+  background: `linear-gradient(180deg, ${themeContract.color.gradientStart}, ${themeContract.color.gradientEnd})`,
+  boxShadow: themeContract.effect.cardGlow,
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.md,
@@ -93,9 +91,9 @@ export const pauseOverlay = style({
   alignItems: "center",
   justifyContent: "center",
   gap: themeContract.space.sm,
-  background: `linear-gradient(180deg, rgba(9, 9, 16, 0.92), rgba(8, 8, 12, 0.75))`,
+  background: `linear-gradient(180deg, ${themeContract.color.overlay}, ${themeContract.color.gradientEnd})`,
   border: `1px solid ${themeContract.color.border}`,
-  boxShadow: `0 25px 50px rgba(0, 0, 0, 0.45)`,
+  boxShadow: themeContract.effect.cardGlow,
   zIndex: 2,
 });
 
@@ -144,10 +142,9 @@ export const ballSummary = style({
 export const bonusPanel = style({
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.lg,
-  border: `1px solid rgba(255, 255, 255, 0.2)`,
-  background:
-    "linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(5, 10, 25, 0.95))",
-  boxShadow: "0 35px 65px rgba(2, 4, 15, 0.65)",
+  border: `1px solid ${themeContract.color.borderLight}`,
+  background: `linear-gradient(135deg, ${themeContract.color.highlight}, ${themeContract.color.gradientEnd})`,
+  boxShadow: themeContract.effect.cardGlow,
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.sm,
@@ -156,8 +153,8 @@ export const bonusPanel = style({
 export const placeholder = style({
   padding: themeContract.space.sm,
   borderRadius: themeContract.radius.md,
-  background: "rgba(255, 255, 255, 0.03)",
-  border: `1px solid rgba(255,255,255,0.08)`,
+  background: themeContract.color.overlay,
+  border: `1px solid ${themeContract.color.borderLight}`,
 });
 
 export const buttonGroup = style({

@@ -7,9 +7,9 @@ export const root = style({
   gap: themeContract.space.sm,
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.lg,
-  border: `1px solid rgba(255,255,255,0.12)`,
-  background: "rgba(255, 255, 255, 0.04)",
-  boxShadow: "0 20px 45px rgba(0,0,0,0.55)",
+  border: `1px solid ${themeContract.color.border}`,
+  background: themeContract.color.surfaceAlt,
+  boxShadow: themeContract.effect.cardGlow,
 });
 
 export const title = style({
@@ -32,21 +32,21 @@ export const form = style({
 export const input = style({
   flex: "1 1 100%",
   borderRadius: themeContract.radius.md,
-  border: `2px solid rgba(255, 255, 255, 0.25)`,
+  border: `2px solid ${themeContract.color.borderLight}`,
   padding: `${themeContract.space.sm} ${themeContract.space.md}`,
-  background: "rgba(255, 255, 255, 0.04)",
+  background: themeContract.color.surface,
   color: themeContract.color.text,
   fontSize: "1rem",
   fontWeight: 700,
   letterSpacing: "0.12rem",
   textTransform: "uppercase",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08)",
+  boxShadow: `inset 0 1px 0 ${themeContract.color.overlay}`,
   transition: "border 0.2s ease, box-shadow 0.2s ease",
   selectors: {
     "&:focus-visible": {
       border: `2px solid ${themeContract.color.accent}`,
       outline: "none",
-      boxShadow: `0 0 0 3px rgba(250, 204, 21, 0.35)`,
+      boxShadow: `0 0 0 3px ${themeContract.color.overlay}`,
     },
   },
 });
@@ -66,6 +66,6 @@ export const historyList = style({
 export const historyItem = style({
   padding: `${themeContract.space.xs} ${themeContract.space.sm}`,
   borderRadius: themeContract.radius.md,
-  background: "rgba(255,255,255,0.05)",
-  border: `1px solid rgba(255,255,255,0.08)`,
+  background: themeContract.color.surface,
+  border: `1px solid ${themeContract.color.borderLight}`,
 });

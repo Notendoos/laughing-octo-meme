@@ -8,9 +8,9 @@ export const root = style({
   gap: themeContract.space.md,
   padding: `${themeContract.space.sm} ${themeContract.space.md}`,
   borderRadius: themeContract.radius.lg,
-  border: `1px solid rgba(255, 255, 255, 0.2)`,
-  background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(9,14,26,0.8))",
-  boxShadow: "0 20px 45px rgba(0, 0, 0, 0.45)",
+  border: `1px solid ${themeContract.color.borderLight}`,
+  background: themeContract.color.surface,
+  boxShadow: themeContract.effect.cardGlow,
 });
 
 export const info = style({

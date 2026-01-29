@@ -19,6 +19,9 @@ export const themeContract = createThemeContract({
     onSuccess: null,
     onInfo: null,
     overlay: null,
+    gradientStart: null,
+    gradientEnd: null,
+    highlight: null,
   },
   font: {
     primary: null,
@@ -39,6 +42,7 @@ export const themeContract = createThemeContract({
   },
   effect: {
     windowGlow: null,
+    cardGlow: null,
   },
   layout: {
     pageMinHeight: null,
@@ -257,6 +261,80 @@ export const chromaVariants: Record<string, ThemePalette> = {
   },
 };
 
+const retroPalettes: Record<string, ThemePalette> = {
+  windows95: {
+    label: "Windows 95",
+    description: "Sharp grays with punchy accent borders",
+    color: {
+      background: "#c0c0c0",
+      surface: "#f8f8f8",
+      surfaceAlt: "#e0e0e0",
+      accent: "#000080",
+      accentLight: "#1f4ed1",
+      accentStrong: "#000050",
+      border: "#6e6e6e",
+      borderLight: "#ffffff",
+      text: "#0b0b0b",
+      subtext: "#3f3f3f",
+      info: "#0047ab",
+      success: "#007f0e",
+      danger: "#a30000",
+      onAccent: "#ffffff",
+      onSuccess: "#ffffff",
+      onInfo: "#ffffff",
+      overlay: "rgba(0, 0, 0, 0.05)",
+    },
+  },
+  oldskool: {
+    label: "Oldskool",
+    description: "Creamy beige with VHS neons",
+    color: {
+      background: "#f5efe1",
+      surface: "#ffffff",
+      surfaceAlt: "#faeeda",
+      accent: "#e65100",
+      accentLight: "#ff8a50",
+      accentStrong: "#b23c00",
+      border: "#2f1a0e",
+      borderLight: "#f6d9bb",
+      text: "#281c14",
+      subtext: "#6b4f3b",
+      info: "#1e5fff",
+      success: "#2a9d8f",
+      danger: "#d62828",
+      onAccent: "#ffffff",
+      onSuccess: "#ffffff",
+      onInfo: "#ffffff",
+      overlay: "rgba(12, 10, 8, 0.06)",
+    },
+  },
+  vaporwave: {
+    label: "Vaporwave",
+    description: "Pastel pinks and blues with neon glow",
+    color: {
+      background: "#12002b",
+      surface: "#1a0326",
+      surfaceAlt: "#2c0b40",
+      accent: "#ff5ef7",
+      accentLight: "#7c94ff",
+      accentStrong: "#e60073",
+      border: "#561c91",
+      borderLight: "#fcd5ff",
+      text: "#f9f3ff",
+      subtext: "#d4c5ff",
+      info: "#00f5ff",
+      success: "#66ffb8",
+      danger: "#ff2d5c",
+      onAccent: "#0b0025",
+      onSuccess: "#01150c",
+      onInfo: "#010f17",
+      overlay: "rgba(255, 255, 255, 0.06)",
+    },
+  },
+};
+
+Object.assign(chromaVariants, retroPalettes);
+
 export type ThemeKey = keyof typeof chromaVariants;
 export const DEFAULT_THEME: ThemeKey = "classic";
 export type ThemePreference = ThemeKey | "auto";
@@ -281,6 +359,7 @@ const baseThemeVars = {
   },
   effect: {
     windowGlow: "0 20px 45px rgba(15, 23, 42, 0.45)",
+    cardGlow: "0 25px 55px rgba(0, 0, 0, 0.45)",
   },
   layout: {
     pageMinHeight: "100vh",
@@ -326,6 +405,9 @@ const applyColorVariant = (
       [themeContract.color.onSuccess]: palette.onSuccess,
       [themeContract.color.onInfo]: palette.onInfo,
       [themeContract.color.overlay]: palette.overlay,
+      [themeContract.color.gradientStart]: palette.surfaceAlt,
+      [themeContract.color.gradientEnd]: palette.surface,
+      [themeContract.color.highlight]: palette.accentLight,
       [themeContract.color.text]: palette.text,
       [themeContract.color.subtext]: palette.subtext,
       [themeContract.color.success]: palette.success,

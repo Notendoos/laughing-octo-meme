@@ -8,8 +8,7 @@ export const root = style({
   padding: themeContract.space.lg,
   borderRadius: themeContract.radius.lg,
   border: `1px solid ${themeContract.color.border}`,
-  background:
-    "linear-gradient(135deg, rgba(255,255,255,0.04), rgba(15,23,42,0.85))",
+  background: `linear-gradient(135deg, ${themeContract.color.gradientStart}, ${themeContract.color.gradientEnd})`,
   boxShadow: themeContract.effect.windowGlow,
 });
 

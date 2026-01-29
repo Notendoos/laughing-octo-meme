@@ -95,7 +95,7 @@ export const slider = style({
       height: "18px",
       borderRadius: "50%",
       background: themeContract.color.accentLight,
-      boxShadow: "0 0 0 3px rgba(255, 255, 255, 0.4)",
+      boxShadow: `0 0 0 3px ${themeContract.color.overlay}`,
       border: "none",
     },
   },
@@ -107,7 +107,7 @@ export const toggleRow = style({
   justifyContent: "space-between",
   padding: `${themeContract.space.sm} ${themeContract.space.md}`,
   borderRadius: themeContract.radius.md,
-  background: "rgba(255, 255, 255, 0.04)",
+  background: themeContract.color.overlay,
 });
 
 export const themeGrid = style({

@@ -10,9 +10,9 @@ export const root = style({
 export const slot = style({
   padding: `${themeContract.space.sm} ${themeContract.space.md}`,
   borderRadius: themeContract.radius.md,
-  background: "rgba(255, 255, 255, 0.05)",
-  border: `1px solid rgba(255, 255, 255, 0.15)`,
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.2)",
+  background: themeContract.color.surfaceAlt,
+  border: `1px solid ${themeContract.color.borderLight}`,
+  boxShadow: `inset 0 1px 0 ${themeContract.color.overlay}`,
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.xs,

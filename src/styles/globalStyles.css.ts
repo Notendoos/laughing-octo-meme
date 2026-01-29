@@ -8,8 +8,7 @@ globalStyle("*, *::before, *::after", {
 globalStyle("body", {
   fontFamily: themeContract.font.primary,
   color: themeContract.color.text,
-  background:
-    `radial-gradient(circle at 15% 15%, rgba(250, 204, 21, 0.15), transparent 55%), ${themeContract.color.background}`,
+  background: themeContract.color.background,
   margin: 0,
   minHeight: themeContract.layout.pageMinHeight,
 });
