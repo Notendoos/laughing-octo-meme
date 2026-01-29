@@ -1,8 +1,9 @@
 import {
   AppGameState,
   BonusRoundState,
+  GameSession,
+  GameSessionConfig,
   GuessResult,
-  WordRoundConfig,
   WordRoundResult,
 } from "./types";
 import {
@@ -12,20 +13,6 @@ import {
   processWordGuess,
   updateWordRoundElapsed,
 } from "./engine";
-
-export type GameSessionConfig = {
-  gridNumbers: number[][];
-  preMarkedNumbers: number[];
-  initialBallPool: number[];
-  wordRoundConfigs: WordRoundConfig[];
-  bonusWord: string;
-};
-
-export type GameSession = {
-  appState: AppGameState;
-  config: GameSessionConfig;
-  nextWordRoundPointer: number;
-};
 
 export type WordRoundEvent =
   | {
@@ -57,65 +44,118 @@ export type BonusRoundEvent =
       guessResult: GuessResult;
     };
 
-const filterBallPool = (pool: number[], preMarked: number[]): number[] =>
-  pool.filter((ball) => !preMarked.includes(ball));
+const buildInitialAppState = (config: GameSessionConfig): AppGameState => {
+  const initialPhase = config.phaseSequence[0];
 
-const buildInitialAppState = (
-  config: GameSessionConfig
-): AppGameState => ({
-  phase: "SETUP",
-  roundIndex: 1,
-  totalScore: 0,
-  bingoCard: createBingoCard(config.gridNumbers, config.preMarkedNumbers),
-  ballPool: filterBallPool(config.initialBallPool, config.preMarkedNumbers),
-  completedLines: [],
-  wordRoundResults: [],
-  activeWordRound: null,
-  bonusRound: null,
-});
+  return {
+    phaseId: initialPhase?.id ?? "setup",
+    phaseKind: initialPhase?.kind ?? "SETUP",
+    phaseLabel: initialPhase?.label,
+    roundIndex: 0,
+    totalScore: 0,
+    bingoCard: createBingoCard(config.gridNumbers, config.preMarkedNumbers),
+    ballPool: config.initialBallPool.filter(
+      (ball) => !config.preMarkedNumbers.includes(ball)
+    ),
+    completedLines: [],
+    wordRoundResults: [],
+    activeWordRound: null,
+    bonusRound: null,
+  };
+};
 
-export const createGameSession = (config: GameSessionConfig): GameSession => ({
-  appState: buildInitialAppState(config),
-  config,
-  nextWordRoundPointer: 0,
-});
-
-export const startNextWordRound = (
-  session: GameSession
+const applyPhaseDefinition = (
+  session: GameSession,
+  phaseIndex: number
 ): GameSession => {
-  if (session.nextWordRoundPointer >= session.config.wordRoundConfigs.length) {
+  const nextDefinition = session.config.phaseSequence[phaseIndex];
+
+  if (!nextDefinition) {
     return session;
   }
 
-  const nextConfig =
-    session.config.wordRoundConfigs[session.nextWordRoundPointer];
-  const activeWordRound = initializeWordRound(nextConfig);
+  let activeWordRound = null;
+  let bonusRound: BonusRoundState | null = session.appState.bonusRound;
+  let roundIndex = session.appState.roundIndex;
+
+  if (nextDefinition.kind === "WORD_ROUND") {
+    const configIndex = nextDefinition.wordRoundConfigIndex;
+    const roundConfig = session.config.wordRoundConfigs[configIndex];
+    activeWordRound = initializeWordRound(roundConfig);
+    roundIndex = configIndex + 1;
+  } else if (nextDefinition.kind === "BONUS_WORD") {
+    bonusRound = createBonusRoundState(
+      session.config.bonusWord,
+      session.appState.wordRoundResults
+    );
+  } else if (nextDefinition.kind === "SETUP") {
+    activeWordRound = null;
+    bonusRound = null;
+    roundIndex = 0;
+  } else if (nextDefinition.kind === "BALL_DRAW") {
+    activeWordRound = null;
+  }
 
   return {
     ...session,
-    nextWordRoundPointer: session.nextWordRoundPointer + 1,
+    phaseIndex,
     appState: {
       ...session.appState,
-      phase: "WORD_ROUND",
-      roundIndex: session.nextWordRoundPointer + 1,
+      phaseId: nextDefinition.id,
+      phaseKind: nextDefinition.kind,
+      phaseLabel: nextDefinition.label,
       activeWordRound,
+      bonusRound,
+      roundIndex,
     },
   };
 };
 
-const transitionToBallDraw = (
+export const createGameSession = (config: GameSessionConfig): GameSession => {
+  if (config.phaseSequence.length === 0) {
+    throw new Error("phaseSequence must include at least one phase definition");
+  }
+
+  const session: GameSession = {
+    appState: buildInitialAppState(config),
+    config,
+    phaseIndex: 0,
+  };
+
+  return applyPhaseDefinition(session, 0);
+};
+
+export const advancePhase = (session: GameSession): GameSession => {
+  if (session.config.phaseSequence.length === 0) {
+    return session;
+  }
+
+  const nextIndex = Math.min(
+    session.phaseIndex + 1,
+    session.config.phaseSequence.length - 1
+  );
+
+  if (nextIndex === session.phaseIndex) {
+    return session;
+  }
+
+  return applyPhaseDefinition(session, nextIndex);
+};
+
+const transitionAfterWordRound = (
   session: GameSession,
   roundResult: WordRoundResult
 ): GameSession => {
-  return {
+  const updatedSession: GameSession = {
     ...session,
     appState: {
       ...session.appState,
-      phase: "BALL_DRAW",
       activeWordRound: null,
       wordRoundResults: [...session.appState.wordRoundResults, roundResult],
     },
   };
+
+  return advancePhase(updatedSession);
 };
 
 export const handleWordGuess = (
@@ -124,8 +164,9 @@ export const handleWordGuess = (
   timestampMs: number
 ): WordRoundUpdate => {
   const { appState } = session;
+
   if (
-    appState.phase !== "WORD_ROUND" ||
+    appState.phaseKind !== "WORD_ROUND" ||
     !appState.activeWordRound ||
     appState.activeWordRound.timeLimitMs <= appState.activeWordRound.elapsedMs
   ) {
@@ -148,8 +189,7 @@ export const handleWordGuess = (
   };
 
   if (result.roundEnded) {
-    updatedSession = transitionToBallDraw(updatedSession, result.roundEnded);
-    updatedSession.appState.totalScore += 0;
+    updatedSession = transitionAfterWordRound(updatedSession, result.roundEnded);
     const ballsToDraw = 2 + result.roundEnded.correctWords;
 
     return {
@@ -177,7 +217,8 @@ export const updateElapsedTime = (
   elapsedMs: number
 ): WordRoundUpdate => {
   const { appState } = session;
-  if (appState.phase !== "WORD_ROUND" || !appState.activeWordRound) {
+
+  if (appState.phaseKind !== "WORD_ROUND" || !appState.activeWordRound) {
     return { session };
   }
 
@@ -196,7 +237,7 @@ export const updateElapsedTime = (
   };
 
   if (update.finished && update.result) {
-    updatedSession = transitionToBallDraw(updatedSession, update.result);
+    updatedSession = transitionAfterWordRound(updatedSession, update.result);
     const ballsToDraw = 2 + update.result.correctWords;
 
     return {
@@ -213,28 +254,11 @@ export const updateElapsedTime = (
 };
 
 export const completeBallDraw = (session: GameSession): GameSession => {
-  if (session.appState.phase !== "BALL_DRAW") {
+  if (session.appState.phaseKind !== "BALL_DRAW") {
     return session;
   }
 
-  const hasMoreWordRounds =
-    session.nextWordRoundPointer < session.config.wordRoundConfigs.length;
-
-  if (hasMoreWordRounds) {
-    return startNextWordRound(session);
-  }
-
-  return {
-    ...session,
-    appState: {
-      ...session.appState,
-      phase: "BONUS_WORD",
-      bonusRound: createBonusRoundState(
-        session.config.bonusWord,
-        session.appState.wordRoundResults
-      ),
-    },
-  };
+  return advancePhase(session);
 };
 
 export const applyBonusGuess = (
@@ -243,7 +267,8 @@ export const applyBonusGuess = (
   timestampMs: number
 ): { session: GameSession; event?: BonusRoundEvent } => {
   const { appState } = session;
-  if (appState.phase !== "BONUS_WORD" || !appState.bonusRound) {
+
+  if (appState.phaseKind !== "BONUS_WORD" || !appState.bonusRound) {
     return { session };
   }
 
@@ -283,11 +308,13 @@ export const applyBonusGuess = (
       totalScore: updatedState.totalScore + 500,
     };
 
+    const finishedSession = advancePhase({
+      ...session,
+      appState: updatedState,
+    });
+
     return {
-      session: {
-        ...session,
-        appState: updatedState,
-      },
+      session: finishedSession,
       event: {
         type: "GUESS",
         guessResult,
@@ -297,24 +324,31 @@ export const applyBonusGuess = (
     };
   }
 
-  const event: BonusRoundEvent = updatedAttempts >= updatedRound.maxAttempts
-    ? {
+  const baseSession: GameSession = {
+    ...session,
+    appState: updatedState,
+  };
+
+  if (updatedAttempts >= updatedRound.maxAttempts) {
+    const finishedSession = advancePhase(baseSession);
+
+    return {
+      session: finishedSession,
+      event: {
         type: "FAILED",
         attemptsUsed: updatedAttempts,
         guessResult,
-      }
-    : {
-        type: "GUESS",
-        guessResult,
-        solved: false,
-        scoreDelta: 0,
-      };
+      },
+    };
+  }
 
   return {
-    session: {
-      ...session,
-      appState: updatedState,
+    session: baseSession,
+    event: {
+      type: "GUESS",
+      guessResult,
+      solved: false,
+      scoreDelta: 0,
     },
-    event,
   };
 };

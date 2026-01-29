@@ -1,4 +1,5 @@
-import "./globals.css";
+import "../styles/globalStyles.css";
+import { lightTheme } from "../styles/theme.css";
 
 export const metadata = {
   title: "WORDINGO",
@@ -13,7 +14,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className={lightTheme}>{children}</body>
     </html>
   );
 }

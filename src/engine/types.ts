@@ -1,4 +1,10 @@
-export type GamePhase = "SETUP" | "WORD_ROUND" | "BALL_DRAW" | "BONUS_WORD" | "GAME_OVER";
+export type GamePhaseKind =
+  | "SETUP"
+  | "WORD_ROUND"
+  | "BALL_DRAW"
+  | "BONUS_WORD"
+  | "GAME_OVER"
+  | "CUSTOM";
 
 export type LineId = string;
 
@@ -50,7 +56,7 @@ export type WordRoundConfig = {
   wordLength: number;
   maxAttemptsPerWord: number;
   wordQueue: string[];
- };
+};
 
 export type BonusRoundState = {
   targetWord: string;
@@ -61,8 +67,44 @@ export type BonusRoundState = {
   solved: boolean;
 };
 
+export type PhaseDefinition =
+  | {
+      id: string;
+      kind: "SETUP";
+      label?: string;
+    }
+  | {
+      id: string;
+      kind: "WORD_ROUND";
+      wordRoundConfigIndex: number;
+      label?: string;
+    }
+  | {
+      id: string;
+      kind: "BALL_DRAW";
+      label?: string;
+    }
+  | {
+      id: string;
+      kind: "BONUS_WORD";
+      label?: string;
+    }
+  | {
+      id: string;
+      kind: "GAME_OVER";
+      label?: string;
+    }
+  | {
+      id: string;
+      kind: "CUSTOM";
+      label: string;
+      metadata?: Record<string, unknown>;
+    };
+
 export type AppGameState = {
-  phase: GamePhase;
+  phaseId: string;
+  phaseKind: GamePhaseKind;
+  phaseLabel?: string;
   roundIndex: number;
   totalScore: number;
   bingoCard: BingoCard;
@@ -71,4 +113,19 @@ export type AppGameState = {
   wordRoundResults: WordRoundResult[];
   activeWordRound: ActiveWordRound | null;
   bonusRound: BonusRoundState | null;
+};
+
+export type GameSessionConfig = {
+  gridNumbers: number[][];
+  preMarkedNumbers: number[];
+  initialBallPool: number[];
+  wordRoundConfigs: WordRoundConfig[];
+  bonusWord: string;
+  phaseSequence: PhaseDefinition[];
+};
+
+export type GameSession = {
+  appState: AppGameState;
+  config: GameSessionConfig;
+  phaseIndex: number;
 };

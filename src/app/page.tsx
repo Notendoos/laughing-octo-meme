@@ -1,5 +1,3 @@
-"use client";
-
 import {
   useCallback,
   useEffect,
@@ -7,62 +5,63 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { gsap } from "gsap";
 import { drawBalls } from "../engine/engine";
 import {
   applyBonusGuess,
+  advancePhase,
   completeBallDraw,
   createGameSession,
   GameSession,
   GameSessionConfig,
   handleWordGuess,
-  startNextWordRound,
   updateElapsedTime,
   WordRoundEvent,
   WordRoundUpdate,
 } from "../engine/session";
-import { Line } from "../engine/types";
-import wordLists from "../data/word-lists.json";
-import { gsap } from "gsap";
+import { BallDrawReport } from "../components/BallDrawPanel/BallDrawPanel";
+import BonusPanel from "../components/BonusPanel/BonusPanel";
+import BingoGrid from "../components/BingoGrid/BingoGrid";
+import Scoreboard from "../components/Scoreboard/Scoreboard";
+import WordRoundPanel from "../components/WordRoundPanel/WordRoundPanel";
+import { buildRoundQueue, sampleBonusWord } from "../utils/word-queue";
 
 const GRID_NUMBERS = Array.from({ length: 5 }, (_, row) =>
   Array.from({ length: 5 }, (_, col) => row * 5 + col + 1)
 );
 
-const FIVE_LETTER_WORDS = wordLists.fiveLetter;
-const TEN_LETTER_WORDS = wordLists.tenLetter;
-const WORDS_PER_ROUND = 3;
 const ROUND_TIME_WINDOWS = [8_000, 9_000, 10_000];
-
-const getWordQueueForRound = (roundIndex: number): string[] => {
-  const startIndex = (roundIndex * WORDS_PER_ROUND) % FIVE_LETTER_WORDS.length;
-  return Array.from({ length: WORDS_PER_ROUND }, (_, offset) => {
-    const idx = (startIndex + offset) % FIVE_LETTER_WORDS.length;
-    return FIVE_LETTER_WORDS[idx];
-  });
-};
+const WORDS_PER_ROUND = 3;
 
 const ROUND_CONFIGS = ROUND_TIME_WINDOWS.map((timeLimitMs, index) => ({
   timeLimitMs,
   wordLength: 5,
   maxAttemptsPerWord: 2,
-  wordQueue: getWordQueueForRound(index),
+  wordQueue: buildRoundQueue(index, WORDS_PER_ROUND),
 }));
+
+const PHASE_SEQUENCE: GameSessionConfig["phaseSequence"] = [
+  { id: "setup", kind: "SETUP", label: "Setup" },
+  { id: "word-round-1", kind: "WORD_ROUND", wordRoundConfigIndex: 0, label: "Word Round 1" },
+  { id: "ball-draw-1", kind: "BALL_DRAW", label: "Ball Draw 1" },
+  { id: "trivia-break-1", kind: "CUSTOM", label: "Trivia Break" },
+  { id: "word-round-2", kind: "WORD_ROUND", wordRoundConfigIndex: 1, label: "Word Round 2" },
+  { id: "ball-draw-2", kind: "BALL_DRAW", label: "Ball Draw 2" },
+  { id: "trivia-break-2", kind: "CUSTOM", label: "Quick Fire" },
+  { id: "word-round-3", kind: "WORD_ROUND", wordRoundConfigIndex: 2, label: "Word Round 3" },
+  { id: "ball-draw-3", kind: "BALL_DRAW", label: "Ball Draw 3" },
+  { id: "bonus", kind: "BONUS_WORD", label: "Bonus Round" },
+  { id: "game-over", kind: "GAME_OVER", label: "Game Over" },
+];
 
 const CONFIG: GameSessionConfig = {
   gridNumbers: GRID_NUMBERS,
   preMarkedNumbers: [2, 6, 9, 11, 13, 17, 20, 24],
   initialBallPool: Array.from({ length: 75 }, (_, index) => index + 1),
   wordRoundConfigs: ROUND_CONFIGS,
-  bonusWord: TEN_LETTER_WORDS[0],
+  phaseSequence: PHASE_SEQUENCE,
+  bonusWord: sampleBonusWord(),
 };
-
-type BallDrawReport = {
-  drawnNumbers: number[];
-  lines: Line[];
-  scoreDelta: number;
-};
-
-const formatMs = (ms: number) => `${Math.max(0, Math.ceil(ms / 1000))}s`;
 
 export default function Page() {
   const [session, setSession] = useState<GameSession>(() =>
@@ -128,7 +127,7 @@ export default function Page() {
   );
 
   useEffect(() => {
-    if (session.appState.phase !== "WORD_ROUND") {
+    if (session.appState.phaseKind !== "WORD_ROUND") {
       return;
     }
 
@@ -143,7 +142,7 @@ export default function Page() {
       const delta = timestamp - lastTimestamp;
       lastTimestamp = timestamp;
       const current = sessionRef.current;
-      if (current.appState.phase !== "WORD_ROUND") {
+      if (current.appState.phaseKind !== "WORD_ROUND") {
         return;
       }
 
@@ -167,7 +166,7 @@ export default function Page() {
 
     rafId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafId);
-  }, [session.appState.phase, session.appState.roundIndex, applyWordRoundUpdate]);
+  }, [session.appState.phaseKind, session.appState.roundIndex, applyWordRoundUpdate]);
 
   useEffect(() => {
     if (!ballDrawReport) {
@@ -221,7 +220,8 @@ export default function Page() {
         ...result.session,
         appState: {
           ...result.session.appState,
-          phase: "GAME_OVER",
+          phaseKind: "GAME_OVER",
+          phaseLabel: "Game Over",
         },
       };
     } else if (result.event?.type === "FAILED") {
@@ -230,11 +230,14 @@ export default function Page() {
         ...result.session,
         appState: {
           ...result.session.appState,
-          phase: "GAME_OVER",
+          phaseKind: "GAME_OVER",
+          phaseLabel: "Game Over",
         },
       };
     } else {
-      setBonusMessage(`Attempts ${result.session.appState.bonusRound?.attemptsUsed ?? 0}/${result.session.appState.bonusRound?.maxAttempts ?? 0}`);
+      setBonusMessage(
+        `Attempts ${result.session.appState.bonusRound?.attemptsUsed ?? 0}/${result.session.appState.bonusRound?.maxAttempts ?? 0}`
+      );
     }
 
     setSession(nextSession);
@@ -244,11 +247,12 @@ export default function Page() {
   const startGame = () => {
     setWordRoundEvent(null);
     setBallDrawReport(null);
-    setSession((current) => startNextWordRound(current));
+    setSession((current) => advancePhase(current));
   };
 
   const activeRound = session.appState.activeWordRound;
-  const phase = session.appState.phase;
+  const phaseKind = session.appState.phaseKind;
+  const phaseLabel = session.appState.phaseLabel ?? phaseKind;
 
   const timerProgress =
     activeRound && activeRound.timeLimitMs > 0
@@ -260,108 +264,51 @@ export default function Page() {
     : 0;
 
   const bonusRound = session.appState.bonusRound;
+  const roundDisplay =
+    phaseKind === "BONUS_WORD"
+      ? "Bonus"
+      : phaseKind === "GAME_OVER"
+      ? "Completed"
+      : session.appState.roundIndex;
 
   return (
     <div className="app-shell">
       <header className="card">
-        <div className="scoreboard">
-          <div className="score-slot">
-            <p>Phase</p>
-            <strong>{phase}</strong>
-          </div>
-          <div className="score-slot">
-            <p>Round</p>
-            <strong>
-              {phase === "BONUS_WORD"
-                ? "Bonus"
-                : phase === "GAME_OVER"
-                ? "Completed"
-                : session.appState.roundIndex}
-            </strong>
-          </div>
-          <div className="score-slot">
-            <p>Total Score</p>
-            <strong>{session.appState.totalScore}</strong>
-          </div>
-          <div className="score-slot">
-            <p>Ball Pool</p>
-            <strong>{session.appState.ballPool.length}</strong>
-          </div>
-          <div className="score-slot">
-            <p>Lines Scored</p>
-            <strong>{session.appState.completedLines.length}</strong>
-          </div>
-        </div>
+        <Scoreboard
+          phaseLabel={phaseLabel}
+          roundLabel={roundDisplay}
+          totalScore={session.appState.totalScore}
+          ballPoolCount={session.appState.ballPool.length}
+          linesCompleted={session.appState.completedLines.length}
+        />
       </header>
 
       <section className="card panel-grid">
         <div>
           <h2>Word Round</h2>
-          {phase === "SETUP" && (
+          {phaseKind === "SETUP" && (
             <button onClick={startGame}>Start Round 1</button>
           )}
-          {phase === "WORD_ROUND" && activeRound && (
-            <>
-              <div className="progress-track">
-                <div
-                  className="progress-bar"
-                  style={{ width: `${timerProgress}%` }}
-                />
-              </div>
-              <p>Time left: {formatMs(remainingTime)}</p>
-              <p>
-                Correct this round: <strong>{activeRound.correctWordCount}</strong>
-              </p>
-              {wordRoundEvent?.type === "CONTINUE" && (
-                <p>
-                  Last guess: {wordRoundEvent.guessResult.guess}{" "}
-                  {wordRoundEvent.guessResult.isCorrect ? "✅" : "❌"}
-                </p>
-              )}
-              <form className="guess-form" onSubmit={handleSubmitGuess}>
-                <label htmlFor="word-guess" className="sr-only">
-                  Guess a word
-                </label>
-                <input
-                  id="word-guess"
-                  value={currentGuess}
-                  onChange={(event) => setCurrentGuess(event.target.value)}
-                  placeholder="Guess the word"
-                  autoComplete="off"
-                />
-                <button type="submit">Submit</button>
-              </form>
-              <p>Queue remaining: {activeRound.wordQueue.length}</p>
-            </>
+          {phaseKind === "WORD_ROUND" && activeRound && (
+            <WordRoundPanel
+              phaseKind={phaseKind}
+              activeRound={activeRound}
+              queueRemaining={activeRound.wordQueue.length}
+              timerProgress={timerProgress}
+              remainingTimeMs={remainingTime}
+              currentGuess={currentGuess}
+              onGuessChange={setCurrentGuess}
+              onSubmitGuess={handleSubmitGuess}
+              wordRoundEvent={wordRoundEvent}
+            />
           )}
-          {phase === "BALL_DRAW" && ballDrawReport && (
-            <>
-              <p>Ball draw in progress…</p>
-              <div className="ball-draw-list">
-                {ballDrawReport.drawnNumbers.map((ball) => (
-                  <span key={ball} className="ball-chip">
-                    {ball}
-                  </span>
-                ))}
-              </div>
-              <p>Lines completed: {ballDrawReport.lines.length}</p>
-            </>
+          {phaseKind === "BALL_DRAW" && ballDrawReport && (
+            <BallDrawPanel report={ballDrawReport} />
           )}
         </div>
         <div>
           <h2>Bingo Board</h2>
-          <div className="bingo-grid">
-            {session.appState.bingoCard.flatMap((row, rowIndex) =>
-              row.map((cell, colIndex) => (
-                <div
-                  key={`${rowIndex}-${colIndex}`}
-                  className={`bingo-cell ${cell.marked ? "marked" : ""}`}
-                >
-                  {cell.number}
-                </div>
-              ))
-            )}
-          </div>
+          <BingoGrid card={session.appState.bingoCard} />
         </div>
       </section>
 
@@ -387,42 +334,15 @@ export default function Page() {
       </section>
 
       <section className="card">
-        {phase === "BONUS_WORD" && bonusRound ? (
-          <div className="bonus-section">
-            <h2>Bonus Round</h2>
-            <p>
-              Word length: <strong>10</strong> · Attempts:{" "}
-              <strong>
-                {bonusRound.attemptsUsed}/{bonusRound.maxAttempts}
-              </strong>
-            </p>
-            <form onSubmit={handleBonusSubmit}>
-              <label htmlFor="bonus-guess" className="sr-only">
-                Enter the bonus word
-              </label>
-              <input
-                id="bonus-guess"
-                value={bonusGuess}
-                onChange={(event) => setBonusGuess(event.target.value)}
-                placeholder="Type the bonus word"
-                autoComplete="off"
-              />
-              <button type="submit" disabled={!bonusGuess.trim()}>
-                Submit
-              </button>
-            </form>
-            <p>{bonusMessage}</p>
-            {bonusRound.guesses.length > 0 && (
-              <ul>
-                {bonusRound.guesses.map((guess, index) => (
-                  <li key={`${guess.guess}-${index}`}>
-                    {guess.guess} · {guess.isCorrect ? "✅" : "❌"}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ) : phase === "GAME_OVER" ? (
+        {phaseKind === "BONUS_WORD" && bonusRound ? (
+          <BonusPanel
+            bonusRound={bonusRound}
+            guessValue={bonusGuess}
+            onGuessChange={setBonusGuess}
+            onSubmitGuess={handleBonusSubmit}
+            message={bonusMessage}
+          />
+        ) : phaseKind === "GAME_OVER" ? (
           <div className="game-over">
             <h2>Game Over</h2>
             <p>Total Score: {session.appState.totalScore}</p>
