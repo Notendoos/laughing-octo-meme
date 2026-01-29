@@ -199,13 +199,13 @@ export default function Page(): ReactElement {
     if (typeof window === "undefined") {
       return DEFAULT_THEME;
     }
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    return prefersDark ? "dark" : "light";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   });
   const resolvedTheme =
     themePreference === "auto" ? systemTheme : themePreference;
   const activeTheme = resolvedTheme;
-  const showPauseOverlay = timerPaused && phaseKind === "WORD_ROUND";
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageKey[]>(() => {
     if (typeof window === "undefined") {
       return DEFAULT_LANGUAGES;
@@ -320,22 +320,11 @@ export default function Page(): ReactElement {
     const handleChange = (event: MediaQueryListEvent) => {
       setSystemTheme(event.matches ? "dark" : "light");
     };
-    if (mql.matches) {
-      setSystemTheme("dark");
-    } else {
-      setSystemTheme("light");
-    }
-    if ("addEventListener" in mql) {
-      mql.addEventListener("change", handleChange);
-    } else {
-      mql.addListener(handleChange);
-    }
+    mql.addEventListener?.("change", handleChange);
+    mql.addListener?.(handleChange);
     return () => {
-      if ("removeEventListener" in mql) {
-        mql.removeEventListener("change", handleChange);
-      } else {
-        mql.removeListener(handleChange);
-      }
+      mql.removeEventListener?.("change", handleChange);
+      mql.removeListener?.(handleChange);
     };
   }, []);
 
@@ -630,6 +619,8 @@ export default function Page(): ReactElement {
     phaseKind === "CUSTOM" && currentPhaseDefinition?.kind === "CUSTOM";
   const customPhaseMetadata: CustomPhaseMetadata | undefined =
     isCustomPhase ? currentPhaseDefinition?.metadata : undefined;
+
+  const showPauseOverlay = timerPaused && phaseKind === "WORD_ROUND";
 
   const multiLanguageMode = selectedLanguages.length > 1;
   const activeLanguageKey =

@@ -37,12 +37,14 @@ export function TimerDisplay({
           <Clock4 size={18} />
           <span>time left</span>
         </p>
-        <p
-          key={timeString}
-          className={styles.value}
-        >
-          {timeString}
-        </p>
+        <div className={styles.valueMask}>
+          <p
+            key={timeString}
+            className={styles.value}
+          >
+            {timeString}
+          </p>
+        </div>
       </div>
       <div className={styles.action}>
         <Button variant="primary" onClick={onToggle}>

@@ -33,8 +33,9 @@ export const value = style({
   fontSize: "1.25rem",
   fontWeight: 700,
   fontFamily: `"DM Mono", "JetBrains Mono", "Fira Code", Menlo, monospace`,
-  transition: "transform 0.25s ease",
-  animation: "pedometer 0.35s ease",
+  display: "inline-block",
+  willChange: "opacity, transform, color",
+  animation: "tickPulse 0.65s ease",
 });
 
 export const action = style({
@@ -43,8 +44,26 @@ export const action = style({
   gap: themeContract.space.xs,
 });
 
-globalStyle("@keyframes pedometer", {
-  from: { transform: "scale(1)" },
-  "50%": { transform: "scale(1.08)" },
-  to: { transform: "scale(1)" },
+export const valueMask = style({
+  overflow: "hidden",
+  height: "1.7rem",
+  minWidth: "3rem",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+
+globalStyle("@keyframes tickPulse", {
+  "0%": {
+    opacity: 0.3,
+    transform: "scale(0.95)",
+  },
+  "40%": {
+    opacity: 1,
+    transform: "scale(1.05)",
+  },
+  "100%": {
+    opacity: 1,
+    transform: "scale(1)",
+  },
 });

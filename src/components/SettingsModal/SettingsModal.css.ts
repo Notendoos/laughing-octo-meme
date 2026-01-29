@@ -4,7 +4,7 @@ import { themeContract } from "../../styles/theme.css.ts";
 export const overlay = style({
   position: "fixed",
   inset: 0,
-  background: "rgba(3, 7, 18, 0.65)",
+  background: themeContract.color.overlay,
   display: "flex",
   justifyContent: "center",
   alignItems: "flex-start",
@@ -14,12 +14,12 @@ export const overlay = style({
 
 export const panel = style({
   width: "min(720px, 100%)",
-  maxHeight: "min(calc(100vh - 2rem), 90vh)",
-  background: "rgba(7, 11, 25, 0.95)",
+  maxHeight: "min(calc(100vh - 3rem), 90vh)",
+  background: themeContract.color.surface,
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.lg,
-  boxShadow: "0 35px 70px rgba(0,0,0,0.7)",
-  border: `1px solid rgba(255,255,255,0.15)`,
+  boxShadow: themeContract.effect.windowGlow,
+  border: `1px solid ${themeContract.color.border}`,
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.md,
@@ -31,7 +31,6 @@ export const panelInner = style({
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.md,
-});
 });
 
 export const header = style({
@@ -60,7 +59,7 @@ export const section = style({
   gap: themeContract.space.sm,
   padding: themeContract.space.sm,
   borderRadius: themeContract.radius.md,
-  background: "rgba(255, 255, 255, 0.02)",
+  background: themeContract.color.surfaceAlt,
 });
 
 export const label = style({
@@ -77,7 +76,7 @@ export const slider = style({
   width: "100%",
   height: "6px",
   borderRadius: "999px",
-  background: "rgba(248, 247, 241, 0.3)",
+  background: themeContract.color.borderLight,
   WebkitAppearance: "none",
   appearance: "none",
   accentColor: themeContract.color.accent,
@@ -89,7 +88,7 @@ export const slider = style({
       height: "18px",
       borderRadius: "50%",
       background: themeContract.color.accentLight,
-      boxShadow: "0 0 0 3px rgba(255, 255, 255, 0.4)",
+      boxShadow: `0 0 0 3px ${themeContract.color.overlay}`,
     },
     "&::-moz-range-thumb": {
       width: "18px",
@@ -119,9 +118,9 @@ export const themeGrid = style({
 
 export const themeOption = style({
   borderRadius: themeContract.radius.md,
-  border: `1px solid rgba(255, 255, 255, 0.15)`,
+  border: `1px solid ${themeContract.color.border}`,
   padding: `${themeContract.space.sm} ${themeContract.space.md}`,
-  background: "rgba(255, 255, 255, 0.02)",
+  background: themeContract.color.surfaceAlt,
   color: themeContract.color.text,
   cursor: "pointer",
   textAlign: "left",
@@ -153,9 +152,9 @@ export const languageGrid = style({
 
 export const languageOption = style({
   borderRadius: themeContract.radius.md,
-  border: `1px solid rgba(255, 255, 255, 0.15)`,
+  border: `1px solid ${themeContract.color.border}`,
   padding: `${themeContract.space.sm} ${themeContract.space.md}`,
-  background: "rgba(255, 255, 255, 0.02)",
+  background: themeContract.color.surfaceAlt,
   color: themeContract.color.text,
   cursor: "pointer",
   minWidth: "140px",
