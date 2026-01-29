@@ -2,11 +2,18 @@
 
 WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **Next.js**, **vanilla-extract theming**, and a deterministic **engine/session** core. The app layers timed word rounds, progressive bingo draws, and a payoff bonus word while keeping all heavy lifting inside the engine and the React layer responsible for pacing, timers, and inputs.
 
+## Recent Updates
+
+- Ensured the animated draw timers rely on DOM-safe handles so the pedometer-style countdown works without TypeScript glitches.
+- Fixed the confetti canvas hook to preserve the `CreateTypes` renderer and avoid Promise/typing noise when firing celebratory bursts.
+
 ### Key Features
 
 - **Timed Word Rounds** – Each round runs inside a configurable timer, tracking Wordle-like feedback per guess and exposing a reusable `GuessInputRow` component with optional Dutch `IJ` handling.
 - **Bingo Board** – A 5×5 grid pre-marked with numbers, receives draws after each round, detects new lines, and awards +200 points per completed line.
 - **Modular Phase Flow** – The session uses a configurable phase sequence (`SETUP`, `WORD_ROUND`, `BALL_DRAW`, `BONUS_WORD`, etc.) so new mini-games or breaks can be inserted easily.
+- **Custom Phase Breaks** – `PHASE_SEQUENCE` includes trivia/quick-fire moments (rendered with `CustomPhasePanel`) that pause the flow until the player confirms they’re ready to continue.
+- **Accessible Controls** – The settings modal provides labeled sliders and toggle buttons with distinct visual states so the duration, theme, and language selectors remain usable for keyboard/assistive-tool users.
 - **Bonus Round** – A 10-letter word with attempts based on earlier rounds; success unlocks +500 bonus points.
 - **Visual Themes + Feedback** – `theme.css.ts` defines chroma variants; the settings modal lets players pick palettes and language word pools, plus confetti bursts celebrate bingo lines and bonus successes.
 - **Multilingual Word Pool** – Add/remove English and Dutch word sources from the modal, and every round queue / bonus word rebuilds around the selected languages (storage ensures the selection carries between sessions).

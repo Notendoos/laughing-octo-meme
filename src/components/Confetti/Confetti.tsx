@@ -1,6 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
-import confetti from "canvas-confetti";
-import type { Options } from "canvas-confetti";
+import confetti, { type CreateTypes, type Options } from "canvas-confetti";
 import * as styles from "./Confetti.css.ts";
 
 export type ConfettiHandle = {
@@ -9,7 +8,7 @@ export type ConfettiHandle = {
 
 const ConfettiLayer = forwardRef<ConfettiHandle, {}>((_, ref) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const rendererRef = useRef<ReturnType<typeof confetti> | null>(null);
+  const rendererRef = useRef<CreateTypes | null>(null);
 
   useEffect(() => {
     if (!canvasRef.current) {
@@ -28,7 +27,7 @@ const ConfettiLayer = forwardRef<ConfettiHandle, {}>((_, ref) => {
     ref,
     () => ({
       fire: (options?: Options) => {
-        rendererRef.current?.({
+        void rendererRef.current?.({
           particleCount: 120,
           spread: 100,
           origin: { y: 0.2 },

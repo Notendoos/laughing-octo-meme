@@ -15,6 +15,12 @@ export const BINGO_SIZE = 5;
 export const BINGO_LINE_SCORE = 200;
 export const BONUS_BASE_ATTEMPTS = 6;
 
+/**
+ * Shuffle an array using Fisher-Yates while keeping the original array unmodified.
+ *
+ * @param items The array to shuffle.
+ * @returns A new array with shuffled values.
+ */
 const shuffleArray = <T>(items: T[]): T[] => {
   const array = [...items];
   for (let i = array.length - 1; i > 0; i -= 1) {
@@ -24,6 +30,13 @@ const shuffleArray = <T>(items: T[]): T[] => {
   return array;
 };
 
+/**
+ * Create a fresh attempt state for a target word.
+ *
+ * @param targetWord The current word that should be guessed.
+ * @param maxAttemptsPerWord How many guesses are allowed for this word.
+ * @returns The initialized WordAttemptState for a new word.
+ */
 export const createWordAttempt = (
   targetWord: string,
   maxAttemptsPerWord: number
@@ -35,6 +48,13 @@ export const createWordAttempt = (
   solved: false,
 });
 
+/**
+ * Compare a guess with the target word and translate letter-by-letter status.
+ *
+ * @param guess The guessed word to evaluate.
+ * @param targetWord The correct word for this round.
+ * @returns An array of letter statuses (`exact`, `present`, `absent`).
+ */
 export const computeLetterFeedback = (
   guess: string,
   targetWord: string
@@ -75,6 +95,12 @@ export const computeLetterFeedback = (
   return feedback;
 };
 
+/**
+ * Progress the active word round queue to the next pending word.
+ *
+ * @param round The current ActiveWordRound holding queue + current word.
+ * @returns A new ActiveWordRound with the next word loaded (or null if none).
+ */
 export const advanceToNextWord = (
   round: ActiveWordRound
 ): ActiveWordRound => {
@@ -90,6 +116,12 @@ export const advanceToNextWord = (
   };
 };
 
+/**
+ * Initialize a brand-new word round from the provided configuration.
+ *
+ * @param config The configuration describing queue, lengths, and timing.
+ * @returns An ActiveWordRound that has immediately loaded its first word.
+ */
 export const initializeWordRound = (config: WordRoundConfig): ActiveWordRound => {
   const initialRound: ActiveWordRound = {
     timeLimitMs: config.timeLimitMs,
@@ -111,6 +143,15 @@ export type WordGuessResult = {
   roundEnded?: WordRoundResult;
 };
 
+/**
+ * Apply a new guess against the current word, update stats, and determine if the round ended.
+ *
+ * @param round The current ActiveWordRound containing the guess state.
+ * @param guess The raw guess string entered by the player.
+ * @param timestampMs Milliseconds timestamp to stamp the guess result.
+ * @param roundIndex The index of this word round (1-indexed) used for persistence.
+ * @returns A WordGuessResult containing the enriched round, guess result, and completion info.
+ */
 export const processWordGuess = (
   round: ActiveWordRound,
   guess: string,
@@ -215,6 +256,14 @@ export type WordRoundUpdateResult = {
   result?: WordRoundResult;
 };
 
+/**
+ * Update the elapsed time for a word round and report whether the round finished.
+ *
+ * @param round The current ActiveWordRound to update.
+ * @param elapsedMs The new elapsed milliseconds measured by the timer.
+ * @param roundIndex The index of the active word round for result reporting.
+ * @returns A WordRoundUpdateResult showing the refreshed round and static flag.
+ */
 export const updateWordRoundElapsed = (
   round: ActiveWordRound,
   elapsedMs: number,
@@ -250,6 +299,13 @@ export const updateWordRoundElapsed = (
   };
 };
 
+/**
+ * Build a randomly shuffled bingo card grid from the supplied number ranges.
+ *
+ * @param gridNumbers Nested arrays representing available numbers to sample.
+ * @param preMarkedNumbers Numbers that should start marked on the card.
+ * @returns A BingoCard with 5×5 cells populated and marked flags applied.
+ */
 export const createBingoCard = (
   gridNumbers: number[][],
   preMarkedNumbers: number[]
@@ -273,6 +329,13 @@ export const createBingoCard = (
   return card;
 };
 
+/**
+ * Mark a single drawn number on the bingo card if it exists and wasn't marked.
+ *
+ * @param card The current bingo card matrix.
+ * @param number The drawn number to mark.
+ * @returns Updated card and whether a cell changed state.
+ */
 export const markNumberOnCard = (
   card: BingoCard,
   number: number
@@ -290,6 +353,11 @@ export const markNumberOnCard = (
   return { card: updatedCard, marked };
 };
 
+/**
+ * Build the default set of bingo lines (rows, columns, diagonals) for scoring.
+ *
+ * @returns An array of Line objects representing each possible bingo linea.
+ */
 export const buildDefaultLines = (): Line[] => {
   const lines: Line[] = [];
 
@@ -335,12 +403,27 @@ export const buildDefaultLines = (): Line[] => {
 const defaultLines = buildDefaultLines();
 export const TOTAL_BINGO_LINES = defaultLines.length;
 
+/**
+ * Check if every cell in a line has been marked.
+ *
+ * @param line A candidate bingo line to evaluate.
+ * @param card The current bingo card state.
+ * @returns True when the line is fully marked.
+ */
 export const isLineComplete = (line: Line, card: BingoCard): boolean => {
   return line.cells.every(
     ({ row, col }) => card[row]?.[col]?.marked === true
   );
 };
 
+
+/**
+ * Draw a batch of balls from the current state and apply them.
+ *
+ * @param state The AppGameState before drawing.
+ * @param ballsToDraw How many balls to draw this round.
+ * @returns Stats about the draw, including updated state, scored lines, and the numbers drawn.
+ */
 export const drawBalls = (
   state: AppGameState,
   ballsToDraw: number
@@ -367,6 +450,13 @@ const selectRandomNumbers = (pool: number[], count: number) => {
   return result;
 };
 
+/**
+ * Apply a list of drawn numbers to the state (removing from pool, marking the card, scoring).
+ *
+ * @param state The AppGameState before the draw.
+ * @param drawNumbers The specific numbers to apply.
+ * @returns An object detailing the updated state plus scoring metadata.
+ */
 export const applyDrawNumbers = (
   state: AppGameState,
   drawNumbers: number[]
@@ -414,6 +504,13 @@ export const applyDrawNumbers = (
   };
 };
 
+/**
+ * Create the bonus round state, using results from previous rounds to grant additional attempts.
+ *
+ * @param targetWord The 10-letter target for the bonus round.
+ * @param pastRounds Completed word round summaries.
+ * @returns The synthesized BonusRoundState for the final phase.
+ */
 export const createBonusRoundState = (
   targetWord: string,
   pastRounds: WordRoundResult[]

@@ -9,17 +9,17 @@ export const grid = style({
 
 export const cell = style({
   borderRadius: themeContract.radius.md,
-  border: `1px solid rgba(255,255,255,0.18)`,
+  border: `1px solid ${themeContract.color.borderLight}`,
   padding: "0.65rem",
   textAlign: "center",
   fontWeight: 700,
-  background: "rgba(255, 255, 255, 0.04)",
+  background: themeContract.color.surfaceAlt,
   color: themeContract.color.text,
-  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.02)",
+  boxShadow: `inset 0 0 0 1px ${themeContract.color.border}`,
 });
 
 export const marked = style({
-  background: "linear-gradient(145deg, rgba(14,165,233,0.4), rgba(59,130,246,0.8))",
-  border: `1px solid rgba(14,165,233,0.6)`,
-  color: "#fff",
+  background: `linear-gradient(145deg, ${themeContract.color.accentLight}, ${themeContract.color.accentStrong})`,
+  border: `1px solid ${themeContract.color.accent}`,
+  color: themeContract.color.onAccent,
 });

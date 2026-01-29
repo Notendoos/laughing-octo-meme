@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import type { ReactElement } from "react";
 import { Clock4, Pause, Play } from "lucide-react";
 import { Button } from "../ui/Button/Button.tsx";
@@ -25,6 +26,8 @@ export function TimerDisplay({
   onToggle,
   paused,
 }: TimerDisplayProps): ReactElement {
+  const timeString = useMemo(() => formatTime(remainingMs), [remainingMs]);
+
   return (
     <div className={styles.root}>
       <div className={styles.info}>
@@ -32,7 +35,12 @@ export function TimerDisplay({
           <Clock4 size={18} />
           <span>time left</span>
         </p>
-        <p className={styles.value}>{formatTime(remainingMs)}</p>
+        <p
+          key={timeString}
+          className={styles.value}
+        >
+          {timeString}
+        </p>
       </div>
       <div className={styles.action}>
         <Button variant="primary" onClick={onToggle}>

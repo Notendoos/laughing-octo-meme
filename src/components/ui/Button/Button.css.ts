@@ -18,8 +18,8 @@ export const base = style({
 export const variants = styleVariants({
   primary: {
     background: themeContract.color.accent,
-    color: "#0f172a",
-    boxShadow: `0 10px 25px rgba(250, 204, 21, 0.4)`,
+    color: themeContract.color.onAccent,
+    boxShadow: themeContract.effect.windowGlow,
   },
   ghost: {
     background: "transparent",

@@ -1,6 +1,8 @@
 import type { ActiveWordRound } from "../../engine/types.ts";
 import type { WordRoundEvent } from "../../engine/session.ts";
+import type { Ref } from "react";
 import * as panelStyles from "../GuessPanel/GuessPanel.css.ts";
+import type { GuessInputRowHandle } from "../GuessPanel/GuessInputRow.tsx";
 import GuessFooter from "../GuessPanel/GuessFooter.tsx";
 import { GuessGrid } from "../GuessPanel/GuessGrid.tsx";
 import GuessHeader from "../GuessPanel/GuessHeader.tsx";
@@ -18,6 +20,7 @@ type WordRoundPanelProps = {
   roundNumber: number;
   timerPaused: boolean;
   dutchMode?: boolean;
+  guessInputRef?: Ref<GuessInputRowHandle>;
 };
 
 export default function WordRoundPanel({
@@ -33,6 +36,7 @@ export default function WordRoundPanel({
   roundNumber,
   timerPaused,
   dutchMode,
+  guessInputRef,
 }: WordRoundPanelProps) {
   if (!activeRound) {
     return null;
@@ -83,6 +87,7 @@ export default function WordRoundPanel({
         onSubmitGuess={onSubmitGuess}
         disabled={phaseKind !== "WORD_ROUND"}
         allowDutch={dutchMode ?? false}
+        inputRef={guessInputRef}
       />
     </div>
   );

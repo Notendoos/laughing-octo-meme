@@ -25,7 +25,12 @@ import {
   WordRoundEvent,
   WordRoundUpdate,
 } from "../engine/session.ts";
-import type { GameSession, GameSessionConfig } from "../engine/types.ts";
+import type {
+  CustomPhaseMetadata,
+  GameSession,
+  GameSessionConfig,
+  PhaseDefinition,
+} from "../engine/types.ts";
 import BallDrawPanel, {
   BallDrawReport,
 } from "../components/BallDrawPanel/BallDrawPanel.tsx";
@@ -33,6 +38,8 @@ import BonusPanel from "../components/BonusPanel/BonusPanel.tsx";
 import BingoGrid from "../components/BingoGrid/BingoGrid.tsx";
 import Scoreboard from "../components/Scoreboard/Scoreboard.tsx";
 import WordRoundPanel from "../components/WordRoundPanel/WordRoundPanel.tsx";
+import type { GuessInputRowHandle } from "../components/GuessPanel/GuessInputRow.tsx";
+import { CustomPhasePanel } from "../components/CustomPhase/CustomPhasePanel.tsx";
 import { SettingsModal } from "../components/SettingsModal/SettingsModal.tsx";
 import { TimerDisplay } from "../components/TimerDisplay/TimerDisplay.tsx";
 import { Settings as SettingsIcon } from "lucide-react";
@@ -91,10 +98,28 @@ const PHASE_SEQUENCE: GameSessionConfig["phaseSequence"] = [
   { id: "setup", kind: "SETUP", label: "Setup" },
   { id: "word-round-1", kind: "WORD_ROUND", wordRoundConfigIndex: 0, label: "Word Round 1" },
   { id: "ball-draw-1", kind: "BALL_DRAW", label: "Ball Draw 1" },
-  { id: "trivia-break-1", kind: "CUSTOM", label: "Trivia Break" },
+  {
+    id: "trivia-break-1",
+    kind: "CUSTOM",
+    label: "Trivia Break",
+    metadata: {
+      description: "Catch your breath while the host fires a quick trivia question.",
+      detail: "Use this pause to look up stray letters, then continue.",
+      actionLabel: "Continue to Round 2",
+    },
+  },
   { id: "word-round-2", kind: "WORD_ROUND", wordRoundConfigIndex: 1, label: "Word Round 2" },
   { id: "ball-draw-2", kind: "BALL_DRAW", label: "Ball Draw 2" },
-  { id: "trivia-break-2", kind: "CUSTOM", label: "Quick Fire" },
+  {
+    id: "trivia-break-2",
+    kind: "CUSTOM",
+    label: "Quick Fire",
+    metadata: {
+      description: "Take a short breather and check your bingo board.",
+      detail: "Ready for the final word push? Hit continue to proceed.",
+      actionLabel: "Start Word Round 3",
+    },
+  },
   { id: "word-round-3", kind: "WORD_ROUND", wordRoundConfigIndex: 2, label: "Word Round 3" },
   { id: "ball-draw-3", kind: "BALL_DRAW", label: "Ball Draw 3" },
   { id: "bonus", kind: "BONUS_WORD", label: "Bonus Round" },
@@ -134,53 +159,67 @@ const createSessionConfig = (
 });
 
 export default function Page(): ReactElement {
-const initialSessionConfig = createSessionConfig(
-  DEFAULT_WORD_ROUND_SECONDS,
-  DEFAULT_LANGUAGES,
-);
-const sessionConfigRef = useRef(initialSessionConfig);
-const [wordRoundSeconds, setWordRoundSeconds] = useState(
-  DEFAULT_WORD_ROUND_SECONDS
-);
-const [session, setSession] = useState<GameSession>(() =>
-  createGameSession(initialSessionConfig)
-);
-const [currentGuess, setCurrentGuess] = useState("");
-const [bonusGuess, setBonusGuess] = useState("");
-const [bonusMessage, setBonusMessage] = useState("");
-const [timerPaused, setTimerPaused] = useState(false);
-const [dutchMode, setDutchMode] = useState(false);
-const [activeTheme, setActiveTheme] = useState<ThemeKey>(() => {
-  if (typeof window === "undefined") {
-    return DEFAULT_THEME;
-  }
-  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-  if (stored && stored in chromaVariants) {
-    return stored as ThemeKey;
-  }
-  return DEFAULT_THEME;
-});
-const [selectedLanguages, setSelectedLanguages] = useState<LanguageKey[]>(() => {
-  if (typeof window === "undefined") {
-    return DEFAULT_LANGUAGES;
-  }
-  const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored);
-      if (
-        Array.isArray(parsed) &&
-        parsed.every((entry) => entry in wordCollections)
-      ) {
-        return parsed as LanguageKey[];
-      }
-    } catch {
-      // ignore invalid data
+  const initialSessionConfig = createSessionConfig(
+    DEFAULT_WORD_ROUND_SECONDS,
+    DEFAULT_LANGUAGES,
+  );
+  const sessionConfigRef = useRef(initialSessionConfig);
+  const [wordRoundSeconds, setWordRoundSeconds] = useState(
+    DEFAULT_WORD_ROUND_SECONDS
+  );
+  const [session, setSession] = useState<GameSession>(() =>
+    createGameSession(initialSessionConfig)
+  );
+  const [currentGuess, setCurrentGuess] = useState("");
+  const [bonusGuess, setBonusGuess] = useState("");
+  const [bonusMessage, setBonusMessage] = useState("");
+  const [timerPaused, setTimerPaused] = useState(false);
+  const [dutchMode, setDutchMode] = useState(false);
+  type ThemePreference = ThemeKey | "auto";
+  const [themePreference, setThemePreference] = useState<ThemePreference>(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_THEME;
     }
-  }
-  return DEFAULT_LANGUAGES;
-});
-const [settingsOpen, setSettingsOpen] = useState(false);
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "auto") {
+      return "auto";
+    }
+    if (stored && stored in chromaVariants) {
+      return stored as ThemeKey;
+    }
+    return DEFAULT_THEME;
+  });
+  const [systemTheme, setSystemTheme] = useState<ThemeKey>(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_THEME;
+    }
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return prefersDark ? "dark" : "light";
+  });
+  const resolvedTheme =
+    themePreference === "auto" ? systemTheme : themePreference;
+  const [selectedLanguages, setSelectedLanguages] = useState<LanguageKey[]>(() => {
+    if (typeof window === "undefined") {
+      return DEFAULT_LANGUAGES;
+    }
+    const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (
+          Array.isArray(parsed) &&
+          parsed.every((entry) => entry in wordCollections)
+        ) {
+          return parsed as LanguageKey[];
+        }
+      } catch {
+        // ignore invalid data
+      }
+    }
+    return DEFAULT_LANGUAGES;
+  });
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const guessInputRef = useRef<GuessInputRowHandle | null>(null);
   const [wordRoundEvent, setWordRoundEvent] = useState<WordRoundEvent | null>(
     null
   );
@@ -190,8 +229,8 @@ const [settingsOpen, setSettingsOpen] = useState(false);
   const [bestScore, setBestScore] = useState(() => readBestScore());
   const [animatedDrawNumbers, setAnimatedDrawNumbers] = useState<number[]>([]);
   const [initialDrawRunning, setInitialDrawRunning] = useState(false);
-  const drawAnimationTimers =
-    useRef<ReturnType<typeof setTimeout>[]>([]);
+  type TimerId = ReturnType<typeof window.setTimeout>;
+  const drawAnimationTimers = useRef<TimerId[]>([]);
   const confettiRef = useRef<ConfettiHandle | null>(null);
 
   const sessionRef = useRef(session);
@@ -227,7 +266,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
   );
 
   const clearDrawAnimation = useCallback(() => {
-    drawAnimationTimers.current.forEach((timer) => clearTimeout(timer));
+    drawAnimationTimers.current.forEach((timer) => window.clearTimeout(timer));
     drawAnimationTimers.current = [];
   }, []);
 
@@ -482,6 +521,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
     );
     applyWordRoundUpdate(update);
     setCurrentGuess("");
+    guessInputRef.current?.focusFirstEmpty();
   };
 
   const handleBonusSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -550,6 +590,18 @@ const [settingsOpen, setSettingsOpen] = useState(false);
   const activeRound = session.appState.activeWordRound;
   const phaseKind = session.appState.phaseKind;
   const phaseLabel = session.appState.phaseLabel ?? phaseKind;
+  const currentPhaseDefinition = session.config.phaseSequence[session.phaseIndex];
+  const isCustomPhase =
+    phaseKind === "CUSTOM" && currentPhaseDefinition?.kind === "CUSTOM";
+  const customPhaseMetadata: CustomPhaseMetadata | undefined =
+    isCustomPhase ? currentPhaseDefinition?.metadata : undefined;
+
+  const completeCustomPhase = useCallback(() => {
+    if (!isCustomPhase) {
+      return;
+    }
+    commitSessionUpdate((current) => advancePhase(current));
+  }, [commitSessionUpdate, isCustomPhase]);
 
   const timerProgress =
     activeRound && activeRound.timeLimitMs > 0
@@ -643,7 +695,13 @@ const [settingsOpen, setSettingsOpen] = useState(false);
               )}
             </div>
           </div>
-          {ballDrawReport ? (
+          {isCustomPhase && currentPhaseDefinition ? (
+            <CustomPhasePanel
+              label={currentPhaseDefinition.label}
+              metadata={customPhaseMetadata}
+              onComplete={completeCustomPhase}
+            />
+          ) : ballDrawReport ? (
             <BallDrawPanel
               report={ballDrawReport}
               displayNumbers={animatedDrawNumbers}

@@ -70,6 +70,12 @@ export type BonusRoundState = {
   solved: boolean;
 };
 
+export type CustomPhaseMetadata = {
+  description?: string;
+  actionLabel?: string;
+  detail?: string;
+};
+
 export type PhaseDefinition =
   | {
       id: string;
@@ -101,7 +107,7 @@ export type PhaseDefinition =
       id: string;
       kind: "CUSTOM";
       label: string;
-      metadata?: Record<string, unknown>;
+      metadata?: CustomPhaseMetadata;
     };
 
 export type AppGameState = {

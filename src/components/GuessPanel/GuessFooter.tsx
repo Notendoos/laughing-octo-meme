@@ -1,4 +1,5 @@
-import { memo, type ReactElement } from "react";
+import { memo, type ReactElement, type Ref } from "react";
+import type { GuessInputRowHandle } from "./GuessInputRow.tsx";
 import { GuessInputRow } from "./GuessInputRow.tsx";
 import { Button } from "../ui/Button/Button.tsx";
 
@@ -9,6 +10,7 @@ type GuessFooterProps = {
   onSubmitGuess: () => void;
   disabled?: boolean;
   allowDutch?: boolean;
+  inputRef?: Ref<GuessInputRowHandle>;
 };
 
 function GuessFooter({
@@ -18,6 +20,7 @@ function GuessFooter({
   onSubmitGuess,
   disabled = false,
   allowDutch = false,
+  inputRef,
 }: GuessFooterProps): ReactElement {
   return (
     <div>
@@ -29,6 +32,7 @@ function GuessFooter({
         onSubmit={onSubmitGuess}
         disabled={disabled}
         allowDutch={allowDutch}
+        ref={inputRef}
       />
       <Button
         type="button"

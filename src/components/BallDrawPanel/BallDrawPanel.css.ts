@@ -27,16 +27,16 @@ export const chip = style({
   alignItems: "center",
   justifyContent: "center",
   fontWeight: 700,
-  border: `1px solid rgba(255,255,255,0.18)`,
-  background: "rgba(255, 255, 255, 0.05)",
-  boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.05)",
+  border: `1px solid ${themeContract.color.borderLight}`,
+  background: themeContract.color.surfaceAlt,
+  boxShadow: `inset 0 0 0 1px ${themeContract.color.border}`,
 });
 
 export const specialChip = style({
-  background: "linear-gradient(120deg, rgba(250, 204, 21, 0.4), rgba(249, 115, 22, 0.9))",
-  border: `1px solid rgba(250, 204, 21, 0.8)`,
-  color: "#060912",
-  boxShadow: "0 10px 25px rgba(250, 204, 21, 0.35)",
+  background: `linear-gradient(120deg, ${themeContract.color.accentLight}, ${themeContract.color.accentStrong})`,
+  border: `1px solid ${themeContract.color.accent}`,
+  color: themeContract.color.onAccent,
+  boxShadow: themeContract.effect.windowGlow,
 });
 
 export const summary = style({

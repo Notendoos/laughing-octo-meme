@@ -9,7 +9,7 @@ export const panel = style({
   borderRadius: themeContract.radius.lg,
   border: `1px solid ${themeContract.color.border}`,
   background: themeContract.color.surface,
-  boxShadow: `0 10px 25px rgba(0, 0, 0, 0.35)`,
+  boxShadow: themeContract.effect.windowGlow,
 });
 
 export const header = style({
@@ -27,7 +27,7 @@ export const meter = style({
   flex: 1,
   padding: `${themeContract.space.sm} ${themeContract.space.md}`,
   borderRadius: themeContract.radius.sm,
-  background: "rgba(255, 255, 255, 0.05)",
+  background: themeContract.color.overlay,
   border: `1px solid ${themeContract.color.border}`,
   display: "flex",
   flexDirection: "column",
@@ -67,7 +67,7 @@ export const progressTrack = style({
   width: "100%",
   height: "8px",
   borderRadius: themeContract.radius.round,
-  background: "rgba(248, 247, 241, 0.25)",
+  background: themeContract.color.borderLight,
   overflow: "hidden",
 });
 
@@ -94,7 +94,7 @@ export const grid = style({
   gap: "0.35rem",
   padding: themeContract.space.xs,
   borderRadius: themeContract.radius.md,
-  background: "rgba(255, 255, 255, 0.02)",
+  background: themeContract.color.overlay,
   border: `1px solid ${themeContract.color.border}`,
 });
 
@@ -140,20 +140,24 @@ export const cellVariant = styleVariants({
     color: themeContract.color.subtext,
   },
   absent: {
-    background: themeContract.color.surface,
+    background: themeContract.color.surfaceAlt,
     color: themeContract.color.text,
+    border: `1px solid ${themeContract.color.border}`,
   },
   present: {
-    background: themeContract.color.info,
-    color: "#02101f",
+    background: themeContract.color.accentLight,
+    color: themeContract.color.onAccent,
+    boxShadow: `0 0 0 1px ${themeContract.color.border}`,
   },
   correct: {
     background: themeContract.color.success,
-    color: "#02101f",
+    color: themeContract.color.onSuccess,
+    boxShadow: `0 0 0 1px ${themeContract.color.border}`,
   },
   seed: {
     background: themeContract.color.accent,
-    color: "#02101f",
+    color: themeContract.color.onAccent,
+    boxShadow: `0 0 0 1px ${themeContract.color.border}`,
   },
 });
 

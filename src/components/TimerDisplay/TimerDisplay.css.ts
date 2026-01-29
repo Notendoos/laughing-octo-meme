@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 import { themeContract } from "../../styles/theme.css.ts";
 
 export const root = style({
@@ -32,10 +32,19 @@ export const label = style({
 export const value = style({
   fontSize: "1.25rem",
   fontWeight: 700,
+  fontFamily: `"DM Mono", "JetBrains Mono", "Fira Code", Menlo, monospace`,
+  transition: "transform 0.25s ease",
+  animation: "pedometer 0.35s ease",
 });
 
 export const action = style({
   display: "flex",
   alignItems: "center",
   gap: themeContract.space.xs,
+});
+
+globalStyle("@keyframes pedometer", {
+  from: { transform: "scale(1)" },
+  "50%": { transform: "scale(1.08)" },
+  to: { transform: "scale(1)" },
 });
