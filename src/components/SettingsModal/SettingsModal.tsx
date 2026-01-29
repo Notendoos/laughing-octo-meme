@@ -12,6 +12,7 @@ import { Button } from "../ui/Button/Button.tsx";
 import {
   chromaVariants,
   ThemeKey,
+  ThemePreference,
 } from "../../styles/theme.css.ts";
 import {
   LanguageKey,
@@ -30,8 +31,9 @@ type SettingsModalProps = {
   onToggleTimerPause: () => void;
   onResetSession: () => void;
   timerStatusText: string;
-  themeKey: ThemeKey;
-  onThemeChange: (value: ThemeKey) => void;
+  themePreference: ThemePreference;
+  appliedTheme: ThemeKey;
+  onThemePreferenceChange: (value: ThemePreference) => void;
   selectedLanguages: LanguageKey[];
   onToggleLanguage: (value: LanguageKey) => void;
 };
@@ -48,8 +50,9 @@ export function SettingsModal({
   onToggleTimerPause,
   onResetSession,
   timerStatusText,
-  themeKey,
-  onThemeChange,
+  themePreference,
+  appliedTheme,
+  onThemePreferenceChange,
   selectedLanguages,
   onToggleLanguage,
 }: SettingsModalProps): ReactElement | null {
@@ -73,10 +76,11 @@ export function SettingsModal({
           </button>
         </header>
 
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <SlidersHorizontal size={16} /> Word round duration
-          </span>
+        <div className={styles.panelInner}>
+          <div className={styles.section}>
+            <span className={styles.label}>
+              <SlidersHorizontal size={16} /> Word round duration
+            </span>
           <input
             type="range"
             className={styles.slider}
@@ -89,11 +93,11 @@ export function SettingsModal({
             Each round now lasts {wordRoundSeconds}s (max {maxSeconds}s). Reset to
             apply.
           </p>
-        </div>
+          </div>
 
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <SlidersHorizontal size={16} /> Dutch IJ input
+          <div className={styles.section}>
+            <span className={styles.label}>
+              <SlidersHorizontal size={16} /> Dutch IJ input
           </span>
           <div className={styles.toggleRow}>
             <p>{dutchMode ? "Enabled" : "Disabled"}</p>
@@ -101,11 +105,11 @@ export function SettingsModal({
               Toggle
             </Button>
           </div>
-        </div>
+          </div>
 
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <Pause size={16} /> Timer controls
+          <div className={styles.section}>
+            <span className={styles.label}>
+              <Pause size={16} /> Timer controls
           </span>
           <div className={styles.toggleRow}>
             <p>{timerStatusText}</p>
@@ -113,11 +117,30 @@ export function SettingsModal({
               {timerPaused ? "Resume" : "Pause"}
             </Button>
           </div>
-        </div>
+          </div>
 
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <Settings size={16} /> Visual themes
+          <div className={styles.section}>
+            <span className={styles.label}>
+              <Settings size={16} /> Theme preference
+          </span>
+          <div className={styles.toggleRow}>
+            <p>
+              {themePreference === "auto"
+                ? "Following your device preference"
+                : "Manual theme selection"}
+            </p>
+            <Button
+              variant={themePreference === "auto" ? "primary" : "ghost"}
+              onClick={() => onThemePreferenceChange("auto")}
+            >
+              Auto (system)
+            </Button>
+          </div>
+          </div>
+
+          <div className={styles.section}>
+            <span className={styles.label}>
+              <Settings size={16} /> Visual themes
           </span>
           <div className={styles.themeGrid}>
             {Object.entries(chromaVariants).map(([key, variant]) => (
@@ -126,9 +149,11 @@ export function SettingsModal({
                 type="button"
                 className={clsx(
                   styles.themeOption,
-                  key === themeKey && styles.themeOptionActive,
+                  key === appliedTheme && styles.themeOptionActive,
                 )}
-                onClick={() => onThemeChange(key as ThemeKey)}
+                onClick={() =>
+                  onThemePreferenceChange(key as ThemePreference)
+                }
               >
                 <span className={styles.themeTitle}>{variant.label}</span>
                 <span className={styles.themeDescription}>
@@ -137,11 +162,11 @@ export function SettingsModal({
               </button>
             ))}
           </div>
-        </div>
+          </div>
 
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <Globe size={16} /> Word languages
+          <div className={styles.section}>
+            <span className={styles.label}>
+              <Globe size={16} /> Word languages
           </span>
           <div className={styles.languageGrid}>
             {Object.entries(languageLabels).map(([key, label]) => {
@@ -165,17 +190,18 @@ export function SettingsModal({
               );
             })}
           </div>
-        </div>
+          </div>
 
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <RefreshCcw size={16} /> Quick actions
+          <div className={styles.section}>
+            <span className={styles.label}>
+              <RefreshCcw size={16} /> Quick actions
           </span>
           <div className={styles.toggleRow}>
             <p>Reset progress and apply new settings</p>
             <Button variant="ghost" onClick={onResetSession}>
               Reset
             </Button>
+          </div>
           </div>
         </div>
 

@@ -10,6 +10,8 @@ type GuessHeaderProps = {
   remainingTimeMs: number;
   correctWordCount: number;
   sessionPaused: boolean;
+  languageLabel?: string;
+  showLanguageChip?: boolean;
 };
 
 function GuessHeader({
@@ -20,6 +22,8 @@ function GuessHeader({
   remainingTimeMs,
   correctWordCount,
   sessionPaused,
+  languageLabel,
+  showLanguageChip = false,
 }: GuessHeaderProps): ReactElement {
   const modeLabel = roundActive ? "Speelmodus" : "Kies een ronde om te starten";
   return (
@@ -28,7 +32,12 @@ function GuessHeader({
         <GuessMeter value={remainingGuesses} label="Beurten" />
         <GuessMeter value={roundNumber} label="Ronde" />
       </div>
-      <p className={styles.modeChip}>{modeLabel}</p>
+      <div className={styles.headerMeta}>
+        <p className={styles.modeChip}>{modeLabel}</p>
+        {showLanguageChip && languageLabel && (
+          <span className={styles.languageChip}>{languageLabel}</span>
+        )}
+      </div>
       <div className={styles.progressRow}>
         <div className={styles.progressTrack}>
           <div

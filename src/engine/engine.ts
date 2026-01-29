@@ -1,3 +1,4 @@
+import { type LanguageKey } from "../utils/word-pool.ts";
 import {
   ActiveWordRound,
   AppGameState,
@@ -6,6 +7,7 @@ import {
   LetterFeedback,
   Line,
   WordAttemptState,
+  WordQueueEntry,
   WordRoundConfig,
   WordRoundResult,
   GuessResult,
@@ -39,9 +41,11 @@ const shuffleArray = <T>(items: T[]): T[] => {
  */
 export const createWordAttempt = (
   targetWord: string,
+  language: LanguageKey,
   maxAttemptsPerWord: number
 ): WordAttemptState => ({
   targetWord,
+  language,
   attemptsUsed: 0,
   maxAttempts: maxAttemptsPerWord,
   guesses: [],
@@ -108,11 +112,15 @@ export const advanceToNextWord = (
     return { ...round, currentWord: null };
   }
 
-  const [nextWord, ...remainingQueue] = round.wordQueue;
+  const [nextEntry, ...remainingQueue] = round.wordQueue;
   return {
     ...round,
     wordQueue: remainingQueue,
-    currentWord: createWordAttempt(nextWord, round.maxAttemptsPerWord),
+    currentWord: createWordAttempt(
+      nextEntry.word,
+      nextEntry.language,
+      round.maxAttemptsPerWord,
+    ),
   };
 };
 

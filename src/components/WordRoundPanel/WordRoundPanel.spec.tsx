@@ -14,7 +14,7 @@ describe("WordRoundPanel", () => {
           elapsedMs: 2000,
           wordLength: 5,
           maxAttemptsPerWord: 2,
-          wordQueue: ["alpha"],
+          wordQueue: [{ word: "alpha", language: "english" }],
           currentWord: null,
           correctWordCount: 1,
         }}
@@ -25,6 +25,10 @@ describe("WordRoundPanel", () => {
         onGuessChange={handleChange}
         onSubmitGuess={handleSubmit}
         wordRoundEvent={null}
+        roundNumber={1}
+        timerPaused={false}
+        languageLabel="English"
+        showLanguageChip
       />
     );
 

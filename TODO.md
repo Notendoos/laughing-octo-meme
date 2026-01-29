@@ -12,6 +12,7 @@
 - [ ] Refine the Wordle-style guess board scroll/animation so it never clips (use GSAP entrances + pedometer effects for numeric changes).
 - [ ] Implement the pause blur overlay + countdown `TimerDisplay` interaction described in the spec.
 - [ ] Revisit the layout to keep settings panel more compact and the glassy gradients consistent across sections.
+- [ ] Add pedometer-style animation to the countdown/timer display so numeric jumps feel smooth alongside the blur overlay.
 
 ## Documentation & Testing
 

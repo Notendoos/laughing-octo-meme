@@ -17,8 +17,13 @@ const activeRound: ActiveWordRound = {
   elapsedMs: 3200,
   wordLength: 5,
   maxAttemptsPerWord: 6,
-  wordQueue: ["clash", "theme", "pride"],
+  wordQueue: [
+    { word: "clash", language: "english" },
+    { word: "theme", language: "english" },
+    { word: "pride", language: "dutch" },
+  ],
   currentWord: {
+    language: "english",
     targetWord: "clash",
     attemptsUsed: 2,
     maxAttempts: 6,
@@ -65,5 +70,7 @@ export const Default: Story = {
     roundNumber: 1,
     timerPaused: false,
     dutchMode: true,
+    languageLabel: "English",
+    showLanguageChip: true,
   },
 };

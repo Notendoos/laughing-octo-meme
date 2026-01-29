@@ -21,6 +21,8 @@ type WordRoundPanelProps = {
   timerPaused: boolean;
   dutchMode?: boolean;
   guessInputRef?: Ref<GuessInputRowHandle>;
+  languageLabel?: string;
+  showLanguageChip?: boolean;
 };
 
 export default function WordRoundPanel({
@@ -37,6 +39,8 @@ export default function WordRoundPanel({
   timerPaused,
   dutchMode,
   guessInputRef,
+  languageLabel,
+  showLanguageChip,
 }: WordRoundPanelProps) {
   if (!activeRound) {
     return null;
@@ -67,6 +71,8 @@ export default function WordRoundPanel({
         remainingTimeMs={remainingTimeMs}
         correctWordCount={activeRound.correctWordCount}
         sessionPaused={timerPaused}
+        languageLabel={languageLabel}
+        showLanguageChip={showLanguageChip}
       />
       <GuessGrid
         guesses={guessRows}

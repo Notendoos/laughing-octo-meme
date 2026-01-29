@@ -14,9 +14,12 @@ WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **
 - **Modular Phase Flow** – The session uses a configurable phase sequence (`SETUP`, `WORD_ROUND`, `BALL_DRAW`, `BONUS_WORD`, etc.) so new mini-games or breaks can be inserted easily.
 - **Custom Phase Breaks** – `PHASE_SEQUENCE` includes trivia/quick-fire moments (rendered with `CustomPhasePanel`) that pause the flow until the player confirms they’re ready to continue.
 - **Accessible Controls** – The settings modal provides labeled sliders and toggle buttons with distinct visual states so the duration, theme, and language selectors remain usable for keyboard/assistive-tool users.
+- **Theme Preference + Auto Mode** – Players can pin a light/dark/chroma palette or defer to their OS preference; the app persists the choice, applies WCAG-friendly tokens, and animates the theme transitions.
+- **Expanded Light Variants** – Each dark palette now has an equivalent lighter version (e.g., Classic, Ocean, Sunset light modes) so the UI can stay airy while preserving contrast pairings.
 - **Bonus Round** – A 10-letter word with attempts based on earlier rounds; success unlocks +500 bonus points.
 - **Visual Themes + Feedback** – `theme.css.ts` defines chroma variants; the settings modal lets players pick palettes and language word pools, plus confetti bursts celebrate bingo lines and bonus successes.
 - **Multilingual Word Pool** – Add/remove English and Dutch word sources from the modal, and every round queue / bonus word rebuilds around the selected languages (storage ensures the selection carries between sessions).
+- **Guess Input Flow** – Submitting a word resets the input and refocuses the next tile so players can keep rolling through the queue without manual clicks.
 - **Storybook & Vitest** – UI primitives, panels, and the timer component are documented with `.stories.tsx` + `.mdx`, and covered by Vitest specs to ensure regressions stay visible.
 
 ### Architecture Overview
@@ -65,6 +68,13 @@ WORDINGO is a single-player, TV-style word guessing & bingo mashup built with **
 - The reusable `Button` component lives in `src/components/ui/Button/Button.tsx` and is used everywhere that needs actions, thereby centralizing variants and docs.
 - Storybook is configured via `.storybook/main.ts` and includes the `vanillaExtractPlugin` so theme styles render correctly.
 - The `word-pool` utility allows future language adds by dropping new JSON files under `src/data/` and registering them in `wordCollections`.
+
+### Outstanding Work
+
+- Complete the Wordle-style guess board scroll + pedometer animation so the grid never clips during long sessions.
+- Surface the pause/blur overlay with the `TimerDisplay` countdown and help text described in the spec.
+- Keep the settings panel/layout compact and the glassy gradients consistent across sections while polishing the Storybook/MDX coverage for newer panels (bingo, bonus, timer, custom phases).
+- Track visual regression guards and Vitest coverage whenever GSAP or new UI pieces affect layout size or input behavior.
 
 ### TODO / Roadmap
 

@@ -57,6 +57,22 @@ export const modeChip = style({
   letterSpacing: "0.08rem",
 });
 
+export const headerMeta = style({
+  display: "flex",
+  alignItems: "center",
+  gap: themeContract.space.xs,
+});
+
+export const languageChip = style({
+  borderRadius: themeContract.radius.round,
+  border: `1px solid ${themeContract.color.border}`,
+  padding: `${themeContract.space.xs} ${themeContract.space.sm}`,
+  background: themeContract.color.overlay,
+  color: themeContract.color.text,
+  fontSize: "0.75rem",
+  letterSpacing: "0.06rem",
+});
+
 export const progressRow = style({
   display: "flex",
   flexDirection: "column",

@@ -13,7 +13,10 @@ describe("Engine - timed word round progression", () => {
       timeLimitMs: 10_000,
       wordLength: 5,
       maxAttemptsPerWord: 2,
-      wordQueue: ["alpha", "bravo"],
+      wordQueue: [
+        { word: "alpha", language: "english" },
+        { word: "bravo", language: "english" },
+      ],
     };
 
     const initialRound = initializeWordRound(config);
@@ -40,7 +43,7 @@ describe("Engine - timed word round progression", () => {
       timeLimitMs: 5_000,
       wordLength: 5,
       maxAttemptsPerWord: 1,
-      wordQueue: ["delta"],
+      wordQueue: [{ word: "delta", language: "english" }],
     };
 
     const initialRound = initializeWordRound(config);

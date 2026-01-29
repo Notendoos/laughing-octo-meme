@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { Clock4, Pause, Play } from "lucide-react";
 import { Button } from "../ui/Button/Button.tsx";
 import * as styles from "./TimerDisplay.css.ts";
+import { usePedometer } from "../../hooks/usePedometer.ts";
 
 type TimerDisplayProps = {
   remainingMs: number;
@@ -26,7 +27,8 @@ export function TimerDisplay({
   onToggle,
   paused,
 }: TimerDisplayProps): ReactElement {
-  const timeString = useMemo(() => formatTime(remainingMs), [remainingMs]);
+  const pedometerTime = usePedometer(remainingMs, { durationMs: 450 });
+  const timeString = useMemo(() => formatTime(pedometerTime), [pedometerTime]);
 
   return (
     <div className={styles.root}>

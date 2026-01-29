@@ -1,3 +1,5 @@
+import type { LanguageKey } from "../utils/word-pool.ts";
+
 export type GamePhaseKind =
   | "SETUP"
   | "WORD_ROUND"
@@ -30,8 +32,14 @@ export type GuessResult = {
   letterFeedback: LetterFeedback[];
 };
 
+export type WordQueueEntry = {
+  word: string;
+  language: LanguageKey;
+};
+
 export type WordAttemptState = {
   targetWord: string;
+  language: LanguageKey;
   attemptsUsed: number;
   maxAttempts: number;
   guesses: GuessResult[];
@@ -43,7 +51,7 @@ export type ActiveWordRound = {
   elapsedMs: number;
   wordLength: number;
   maxAttemptsPerWord: number;
-  wordQueue: string[];
+  wordQueue: WordQueueEntry[];
   currentWord: WordAttemptState | null;
   correctWordCount: number;
 };
@@ -58,7 +66,7 @@ export type WordRoundConfig = {
   timeLimitMs: number;
   wordLength: number;
   maxAttemptsPerWord: number;
-  wordQueue: string[];
+  wordQueue: WordQueueEntry[];
 };
 
 export type BonusRoundState = {

@@ -73,6 +73,41 @@ export const secondaryPanel = style({
   minHeight: "420px",
 });
 
+export const panelWrapper = style({
+  position: "relative",
+});
+
+export const panelBlurred = style({
+  filter: "blur(4px)",
+  opacity: 0.75,
+  transition: "filter 0.3s ease, opacity 0.3s ease",
+  pointerEvents: "none",
+});
+
+export const pauseOverlay = style({
+  position: "absolute",
+  inset: 0,
+  borderRadius: themeContract.radius.lg,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: themeContract.space.sm,
+  background: `linear-gradient(180deg, rgba(9, 9, 16, 0.92), rgba(8, 8, 12, 0.75))`,
+  border: `1px solid ${themeContract.color.border}`,
+  boxShadow: `0 25px 50px rgba(0, 0, 0, 0.45)`,
+  zIndex: 2,
+});
+
+export const overlayLabel = style({
+  fontSize: "1.4rem",
+  fontWeight: 600,
+});
+
+export const overlayCaption = style({
+  color: themeContract.color.subtext,
+});
+
 export const panelHeader = style({
   display: "flex",
   justifyContent: "space-between",

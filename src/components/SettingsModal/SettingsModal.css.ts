@@ -7,13 +7,14 @@ export const overlay = style({
   background: "rgba(3, 7, 18, 0.65)",
   display: "flex",
   justifyContent: "center",
-  alignItems: "center",
+  alignItems: "flex-start",
   padding: themeContract.space.md,
   zIndex: 100,
 });
 
 export const panel = style({
-  width: "min(520px, 100%)",
+  width: "min(720px, 100%)",
+  maxHeight: "min(calc(100vh - 2rem), 90vh)",
   background: "rgba(7, 11, 25, 0.95)",
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.lg,
@@ -22,6 +23,15 @@ export const panel = style({
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.md,
+  overflowY: "auto",
+  scrollbarWidth: "thin",
+});
+
+export const panelInner = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: themeContract.space.md,
+});
 });
 
 export const header = style({

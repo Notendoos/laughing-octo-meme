@@ -47,13 +47,19 @@ import { Button } from "../components/ui/Button/Button.tsx";
 import { buildRoundQueue, sampleBonusWord } from "../utils/word-queue.ts";
 import { readBestScore, writeBestScore } from "../utils/local-store.ts";
 import * as styles from "./page.css.ts";
-import { chromaVariants, DEFAULT_THEME, ThemeKey } from "../styles/theme.css.ts";
+import {
+  chromaVariants,
+  DEFAULT_THEME,
+  ThemeKey,
+  ThemePreference,
+} from "../styles/theme.css.ts";
 import {
   DEFAULT_LANGUAGES,
   languageLabels,
   LanguageKey,
   wordCollections,
 } from "../utils/word-pool.ts";
+import clsx from "clsx";
 import ConfettiLayer, { type ConfettiHandle } from "../components/Confetti/Confetti.tsx";
 
 const GRID_NUMBERS = Array.from({ length: 5 }, (_, row) =>
@@ -198,6 +204,8 @@ export default function Page(): ReactElement {
   });
   const resolvedTheme =
     themePreference === "auto" ? systemTheme : themePreference;
+  const activeTheme = resolvedTheme;
+  const showPauseOverlay = timerPaused && phaseKind === "WORD_ROUND";
   const [selectedLanguages, setSelectedLanguages] = useState<LanguageKey[]>(() => {
     if (typeof window === "undefined") {
       return DEFAULT_LANGUAGES;
@@ -308,9 +316,36 @@ export default function Page(): ReactElement {
     if (typeof window === "undefined") {
       return;
     }
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (event: MediaQueryListEvent) => {
+      setSystemTheme(event.matches ? "dark" : "light");
+    };
+    if (mql.matches) {
+      setSystemTheme("dark");
+    } else {
+      setSystemTheme("light");
+    }
+    if ("addEventListener" in mql) {
+      mql.addEventListener("change", handleChange);
+    } else {
+      mql.addListener(handleChange);
+    }
+    return () => {
+      if ("removeEventListener" in mql) {
+        mql.removeEventListener("change", handleChange);
+      } else {
+        mql.removeListener(handleChange);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
     document.documentElement.setAttribute("data-theme", activeTheme);
-    window.localStorage.setItem(THEME_STORAGE_KEY, activeTheme);
-  }, [activeTheme]);
+    window.localStorage.setItem(THEME_STORAGE_KEY, themePreference);
+  }, [activeTheme, themePreference]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -596,12 +631,27 @@ export default function Page(): ReactElement {
   const customPhaseMetadata: CustomPhaseMetadata | undefined =
     isCustomPhase ? currentPhaseDefinition?.metadata : undefined;
 
+  const multiLanguageMode = selectedLanguages.length > 1;
+  const activeLanguageKey =
+    activeRound?.currentWord?.language ?? activeRound?.wordQueue[0]?.language ?? null;
+  const currentLanguageLabel = activeLanguageKey
+    ? languageLabels[activeLanguageKey]
+    : null;
+  const showLanguageChip = multiLanguageMode && Boolean(currentLanguageLabel);
+
   const completeCustomPhase = useCallback(() => {
     if (!isCustomPhase) {
       return;
     }
     commitSessionUpdate((current) => advancePhase(current));
   }, [commitSessionUpdate, isCustomPhase]);
+
+  const handleThemePreferenceChange = useCallback(
+    (value: ThemePreference) => {
+      setThemePreference(value);
+    },
+    [],
+  );
 
   const timerProgress =
     activeRound && activeRound.timeLimitMs > 0
@@ -677,65 +727,84 @@ export default function Page(): ReactElement {
       </header>
 
       <main className={styles.main}>
-        <section className={`${styles.panel} ${styles.primaryPanel}`}>
-          <div className={styles.panelHeader}>
-            <div>
-              <p className={styles.panelLabel}>Word Round</p>
-              <h2 className={styles.panelTitle}>{phaseLabel}</h2>
+        <div className={styles.panelWrapper}>
+          <section
+            className={clsx(
+              styles.panel,
+              styles.primaryPanel,
+              showPauseOverlay && styles.panelBlurred,
+            )}
+          >
+            <div className={styles.panelHeader}>
+              <div>
+                <p className={styles.panelLabel}>Word Round</p>
+                <h2 className={styles.panelTitle}>{phaseLabel}</h2>
+              </div>
+              <div className={styles.buttonGroup}>
+                {phaseKind === "SETUP" && (
+                  <Button
+                    variant="primary"
+                    onClick={startGame}
+                    disabled={initialDrawRunning}
+                  >
+                    {initialDrawRunning ? "Drawing balls…" : "Start Session"}
+                  </Button>
+                )}
+              </div>
             </div>
-            <div className={styles.buttonGroup}>
-              {phaseKind === "SETUP" && (
-                <Button
-                  variant="primary"
-                  onClick={startGame}
-                  disabled={initialDrawRunning}
-                >
-                  {initialDrawRunning ? "Drawing balls…" : "Start Session"}
-                </Button>
-              )}
-            </div>
-          </div>
-          {isCustomPhase && currentPhaseDefinition ? (
-            <CustomPhasePanel
-              label={currentPhaseDefinition.label}
-              metadata={customPhaseMetadata}
-              onComplete={completeCustomPhase}
-            />
-          ) : ballDrawReport ? (
-            <BallDrawPanel
-              report={ballDrawReport}
-              displayNumbers={animatedDrawNumbers}
-            />
-          ) : phaseKind === "WORD_ROUND" && activeRound ? (
-            <WordRoundPanel
-              phaseKind={phaseKind}
-              activeRound={activeRound}
-              queueRemaining={activeRound.wordQueue.length}
-              timerProgress={timerProgress}
-              remainingTimeMs={remainingTime}
-              currentGuess={currentGuess}
-              onGuessChange={setCurrentGuess}
-              onSubmitGuess={handleSubmitGuess}
-              wordRoundEvent={wordRoundEvent}
-              roundNumber={session.appState.roundIndex}
-              timerPaused={timerPaused}
-              dutchMode={dutchMode}
-            />
-          ) : (
-            <div className={styles.placeholder}>
-              {phaseKind === "SETUP" ? (
-                <p className={styles.helperText}>
-                  Configure the timers and start a session to begin the timed word
-                  rounds.
-                </p>
-              ) : (
-                <p className={styles.helperText}>
-                  Awaiting the next phase.
-                </p>
-              )}
+            {isCustomPhase && currentPhaseDefinition ? (
+              <CustomPhasePanel
+                label={currentPhaseDefinition.label}
+                metadata={customPhaseMetadata}
+                onComplete={completeCustomPhase}
+              />
+            ) : ballDrawReport ? (
+              <BallDrawPanel
+                report={ballDrawReport}
+                displayNumbers={animatedDrawNumbers}
+              />
+            ) : phaseKind === "WORD_ROUND" && activeRound ? (
+              <WordRoundPanel
+                phaseKind={phaseKind}
+                activeRound={activeRound}
+                queueRemaining={activeRound.wordQueue.length}
+                timerProgress={timerProgress}
+                remainingTimeMs={remainingTime}
+                currentGuess={currentGuess}
+                onGuessChange={setCurrentGuess}
+                onSubmitGuess={handleSubmitGuess}
+                wordRoundEvent={wordRoundEvent}
+                roundNumber={session.appState.roundIndex}
+                timerPaused={timerPaused}
+                dutchMode={dutchMode}
+                languageLabel={currentLanguageLabel ?? undefined}
+                showLanguageChip={showLanguageChip}
+                guessInputRef={guessInputRef}
+              />
+            ) : (
+              <div className={styles.placeholder}>
+                {phaseKind === "SETUP" ? (
+                  <p className={styles.helperText}>
+                    Configure the timers and start a session to begin the timed word
+                    rounds.
+                  </p>
+                ) : (
+                  <p className={styles.helperText}>
+                    Awaiting the next phase.
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+          {showPauseOverlay && (
+            <div className={styles.pauseOverlay}>
+              <p className={styles.overlayLabel}>Session paused</p>
+              <p className={styles.overlayCaption}>
+                Tap the timer control to resume and keep guessing.
+              </p>
             </div>
           )}
-        </section>
+        </div>
 
         <section className={`${styles.panel} ${styles.secondaryPanel}`}>
           <div className={styles.panelHeader}>
@@ -807,8 +876,9 @@ export default function Page(): ReactElement {
         onToggleTimerPause={toggleTimerPause}
         onResetSession={resetSession}
         timerStatusText={timerStatusText}
-        themeKey={activeTheme}
-        onThemeChange={(value) => setActiveTheme(value)}
+        themePreference={themePreference}
+        appliedTheme={activeTheme}
+        onThemePreferenceChange={handleThemePreferenceChange}
         selectedLanguages={selectedLanguages}
         onToggleLanguage={toggleLanguageSelection}
       />
