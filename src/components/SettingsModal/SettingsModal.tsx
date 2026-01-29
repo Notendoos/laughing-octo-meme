@@ -5,10 +5,18 @@ import {
   SlidersHorizontal,
   RefreshCcw,
   Pause,
+  Globe,
 } from "lucide-react";
 import * as styles from "./SettingsModal.css.ts";
 import { Button } from "../ui/Button/Button.tsx";
-import { chromaVariants, ThemeKey } from "../../styles/theme.css.ts";
+import {
+  chromaVariants,
+  ThemeKey,
+} from "../../styles/theme.css.ts";
+import {
+  LanguageKey,
+  languageLabels,
+} from "../../utils/word-pool.ts";
 
 type SettingsModalProps = {
   open: boolean;
@@ -24,6 +32,8 @@ type SettingsModalProps = {
   timerStatusText: string;
   themeKey: ThemeKey;
   onThemeChange: (value: ThemeKey) => void;
+  selectedLanguages: LanguageKey[];
+  onToggleLanguage: (value: LanguageKey) => void;
 };
 
 export function SettingsModal({
@@ -40,6 +50,8 @@ export function SettingsModal({
   timerStatusText,
   themeKey,
   onThemeChange,
+  selectedLanguages,
+  onToggleLanguage,
 }: SettingsModalProps): ReactElement | null {
   if (!open) {
     return null;
@@ -124,6 +136,34 @@ export function SettingsModal({
                 </span>
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <span className={styles.label}>
+            <Globe size={16} /> Word languages
+          </span>
+          <div className={styles.languageGrid}>
+            {Object.entries(languageLabels).map(([key, label]) => {
+              const langKey = key as LanguageKey;
+              const isActive = selectedLanguages.includes(langKey);
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  className={clsx(
+                    styles.languageOption,
+                    isActive && styles.languageOptionActive,
+                  )}
+                  onClick={() => onToggleLanguage(langKey)}
+                >
+                  <span className={styles.languageTitle}>{label}</span>
+                  <span className={styles.languageBadge}>
+                    {isActive ? "Included" : "Add"}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

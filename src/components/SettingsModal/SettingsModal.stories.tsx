@@ -26,5 +26,7 @@ export const Default: StoryObj<typeof SettingsModal> = {
     timerStatusText: "Running",
     themeKey: "classic",
     onThemeChange: () => undefined,
+    selectedLanguages: ["english"],
+    onToggleLanguage: () => undefined,
   },
 };

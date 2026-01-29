@@ -19,6 +19,8 @@ describe("SettingsModal", () => {
         timerStatusText="Running"
         themeKey="classic"
         onThemeChange={vi.fn()}
+        selectedLanguages={["english"]}
+        onToggleLanguage={vi.fn()}
       />,
     );
 

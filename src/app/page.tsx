@@ -41,6 +41,13 @@ import { buildRoundQueue, sampleBonusWord } from "../utils/word-queue.ts";
 import { readBestScore, writeBestScore } from "../utils/local-store.ts";
 import * as styles from "./page.css.ts";
 import { chromaVariants, DEFAULT_THEME, ThemeKey } from "../styles/theme.css.ts";
+import {
+  DEFAULT_LANGUAGES,
+  languageLabels,
+  LanguageKey,
+  wordCollections,
+} from "../utils/word-pool.ts";
+import ConfettiLayer, { type ConfettiHandle } from "../components/Confetti/Confetti.tsx";
 
 const GRID_NUMBERS = Array.from({ length: 5 }, (_, row) =>
   Array.from({ length: 5 }, (_, col) => row * 5 + col + 1)
@@ -54,6 +61,7 @@ const WORDS_PER_ROUND = 3;
 const PRE_MARKED_NUMBERS: number[] = [];
 const INITIAL_DRAW_COUNT = 8;
 const THEME_STORAGE_KEY = "wordingo-theme";
+const LANGUAGE_STORAGE_KEY = "wordingo-languages";
 
 const waitMs = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -93,7 +101,10 @@ const PHASE_SEQUENCE: GameSessionConfig["phaseSequence"] = [
   { id: "game-over", kind: "GAME_OVER", label: "Game Over" },
 ];
 
-const buildWordRoundConfigs = (baseSeconds: number) => {
+const buildWordRoundConfigs = (
+  baseSeconds: number,
+  languages: LanguageKey[] = DEFAULT_LANGUAGES,
+) => {
   const clampedSeconds = Math.max(
     MIN_WORD_ROUND_SECONDS,
     Math.min(MAX_WORD_ROUND_SECONDS, baseSeconds)
@@ -106,21 +117,27 @@ const buildWordRoundConfigs = (baseSeconds: number) => {
     timeLimitMs,
     wordLength: 5,
     maxAttemptsPerWord: 5,
-    wordQueue: buildRoundQueue(index, WORDS_PER_ROUND),
+    wordQueue: buildRoundQueue(index, WORDS_PER_ROUND, languages),
   }));
 };
 
-const createSessionConfig = (baseSeconds: number): GameSessionConfig => ({
+const createSessionConfig = (
+  baseSeconds: number,
+  languages: LanguageKey[] = DEFAULT_LANGUAGES,
+): GameSessionConfig => ({
   gridNumbers: GRID_NUMBERS,
   preMarkedNumbers: PRE_MARKED_NUMBERS,
   initialBallPool: Array.from({ length: 75 }, (_, index) => index + 1),
-  wordRoundConfigs: buildWordRoundConfigs(baseSeconds),
+  wordRoundConfigs: buildWordRoundConfigs(baseSeconds, languages),
   phaseSequence: PHASE_SEQUENCE,
-  bonusWord: sampleBonusWord(),
+  bonusWord: sampleBonusWord(languages),
 });
 
 export default function Page(): ReactElement {
-  const initialSessionConfig = createSessionConfig(DEFAULT_WORD_ROUND_SECONDS);
+const initialSessionConfig = createSessionConfig(
+  DEFAULT_WORD_ROUND_SECONDS,
+  DEFAULT_LANGUAGES,
+);
 const sessionConfigRef = useRef(initialSessionConfig);
 const [wordRoundSeconds, setWordRoundSeconds] = useState(
   DEFAULT_WORD_ROUND_SECONDS
@@ -143,6 +160,26 @@ const [activeTheme, setActiveTheme] = useState<ThemeKey>(() => {
   }
   return DEFAULT_THEME;
 });
+const [selectedLanguages, setSelectedLanguages] = useState<LanguageKey[]>(() => {
+  if (typeof window === "undefined") {
+    return DEFAULT_LANGUAGES;
+  }
+  const stored = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (
+        Array.isArray(parsed) &&
+        parsed.every((entry) => entry in wordCollections)
+      ) {
+        return parsed as LanguageKey[];
+      }
+    } catch {
+      // ignore invalid data
+    }
+  }
+  return DEFAULT_LANGUAGES;
+});
 const [settingsOpen, setSettingsOpen] = useState(false);
   const [wordRoundEvent, setWordRoundEvent] = useState<WordRoundEvent | null>(
     null
@@ -155,6 +192,7 @@ const [settingsOpen, setSettingsOpen] = useState(false);
   const [initialDrawRunning, setInitialDrawRunning] = useState(false);
   const drawAnimationTimers =
     useRef<ReturnType<typeof setTimeout>[]>([]);
+  const confettiRef = useRef<ConfettiHandle | null>(null);
 
   const sessionRef = useRef(session);
   const initialDrawPerformedRef = useRef(false);
@@ -218,12 +256,32 @@ const [settingsOpen, setSettingsOpen] = useState(false);
   }, [session]);
 
   useEffect(() => {
+    if (ballDrawReport?.lines && ballDrawReport.lines.length > 0) {
+      confettiRef.current?.fire({
+        particleCount: 200,
+        spread: 140,
+        origin: { y: 0.25 },
+      });
+    }
+  }, [ballDrawReport?.lines]);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
     document.documentElement.setAttribute("data-theme", activeTheme);
     window.localStorage.setItem(THEME_STORAGE_KEY, activeTheme);
   }, [activeTheme]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.localStorage.setItem(
+      LANGUAGE_STORAGE_KEY,
+      JSON.stringify(selectedLanguages),
+    );
+  }, [selectedLanguages]);
 
   const startInitialDraw = useCallback(async () => {
     if (initialDrawPerformedRef.current) {
@@ -271,8 +329,11 @@ const [settingsOpen, setSettingsOpen] = useState(false);
   ]);
 
   useEffect(() => {
-    sessionConfigRef.current = createSessionConfig(wordRoundSeconds);
-  }, [wordRoundSeconds]);
+    sessionConfigRef.current = createSessionConfig(
+      wordRoundSeconds,
+      selectedLanguages,
+    );
+  }, [wordRoundSeconds, selectedLanguages]);
 
   const resetSession = () => {
     commitSession(createGameSession(sessionConfigRef.current));
@@ -476,6 +537,16 @@ const [settingsOpen, setSettingsOpen] = useState(false);
     setTimerPaused((prev) => !prev);
   };
 
+  const toggleLanguageSelection = useCallback((lang: LanguageKey) => {
+    setSelectedLanguages((current) => {
+      if (current.includes(lang)) {
+        const next = current.filter((value) => value !== lang);
+        return next.length ? next : current;
+      }
+      return [...current, lang];
+    });
+  }, []);
+
   const activeRound = session.appState.activeWordRound;
   const phaseKind = session.appState.phaseKind;
   const phaseLabel = session.appState.phaseLabel ?? phaseKind;
@@ -509,8 +580,19 @@ const [settingsOpen, setSettingsOpen] = useState(false);
   const hasBingo = completedLineCount > 0;
   const bingoExhausted = completedLineCount >= TOTAL_BINGO_LINES;
 
+  useEffect(() => {
+    if (bonusRound?.solved) {
+      confettiRef.current?.fire({
+        particleCount: 260,
+        spread: 160,
+        origin: { y: 0.35 },
+      });
+    }
+  }, [bonusRound?.solved]);
+
   return (
     <div className={styles.shell}>
+      <ConfettiLayer ref={confettiRef} />
       <header className={styles.header}>
         <div className={styles.headerPanel}>
           <Scoreboard
@@ -669,6 +751,8 @@ const [settingsOpen, setSettingsOpen] = useState(false);
         timerStatusText={timerStatusText}
         themeKey={activeTheme}
         onThemeChange={(value) => setActiveTheme(value)}
+        selectedLanguages={selectedLanguages}
+        onToggleLanguage={toggleLanguageSelection}
       />
     </div>
   ) as ReactElement;

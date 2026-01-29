@@ -111,6 +111,43 @@ export const themeDescription = style({
   color: themeContract.color.subtext,
 });
 
+export const languageGrid = style({
+  display: "flex",
+  flexWrap: "wrap",
+  gap: themeContract.space.sm,
+});
+
+export const languageOption = style({
+  borderRadius: themeContract.radius.md,
+  border: `1px solid rgba(255, 255, 255, 0.15)`,
+  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
+  background: "rgba(255, 255, 255, 0.02)",
+  color: themeContract.color.text,
+  cursor: "pointer",
+  textAlign: "left",
+  minWidth: "120px",
+  flex: "1 1 140px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: themeContract.space.xs,
+  transition: "border-color 0.2s ease, transform 0.2s ease",
+});
+
+export const languageOptionActive = style({
+  borderColor: themeContract.color.accent,
+  transform: "translateY(-1px)",
+});
+
+export const languageTitle = style({
+  fontWeight: 600,
+});
+
+export const languageBadge = style({
+  fontSize: "0.75rem",
+  color: themeContract.color.subtext,
+});
+
 export const actionRow = style({
   display: "flex",
   justifyContent: "flex-end",
