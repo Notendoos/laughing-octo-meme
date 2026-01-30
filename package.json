@@ -1,8 +1,7 @@
 {
     "name": "laughing-octo-meme",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
+    "version": "0.1.0",
+    "private": true,
     "scripts": {
         "dev": "next dev --webpack",
         "build": "next build --webpack",
