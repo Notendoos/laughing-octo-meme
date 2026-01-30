@@ -19,7 +19,6 @@ describe("WordRoundPanel", () => {
           correctWordCount: 1,
         }}
         queueRemaining={1}
-        timerProgress={60}
         remainingTimeMs={3000}
         currentGuess=""
         onGuessChange={handleChange}

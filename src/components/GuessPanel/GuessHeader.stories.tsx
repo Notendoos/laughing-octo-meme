@@ -16,8 +16,6 @@ export const Default: StoryObj<typeof GuessHeader> = {
     roundNumber: 2,
     remainingGuesses: 3,
     roundActive: true,
-    timerProgress: 65,
-    remainingTimeMs: 45000,
     correctWordCount: 4,
     sessionPaused: false,
   },

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactElement,
@@ -12,6 +13,7 @@ import {
   applyDrawNumbers,
   drawBalls,
   createBingoCard,
+  BINGO_SIZE,
   TOTAL_BINGO_LINES,
 } from "../engine/engine.ts";
 import {
@@ -69,7 +71,7 @@ const GRID_NUMBERS = Array.from({ length: 5 }, (_, row) =>
 const DEFAULT_WORD_ROUND_SECONDS = 60;
 const MIN_WORD_ROUND_SECONDS = 5;
 const MAX_WORD_ROUND_SECONDS = 90;
-const WORDS_PER_ROUND = 3;
+const WORDS_PER_ROUND = 10;
 
 const PRE_MARKED_NUMBERS: number[] = [];
 const INITIAL_DRAW_COUNT = 8;
@@ -99,6 +101,34 @@ const createRandomBallPool = (): number[] => {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   return pool;
+};
+
+const createDeterministicBingoCard = (
+  gridNumbers: number[][],
+  preMarkedNumbers: number[]
+): BingoCard => {
+  return gridNumbers.slice(0, BINGO_SIZE).map((row) =>
+    row.slice(0, BINGO_SIZE).map((number) => ({
+      number,
+      marked: preMarkedNumbers.includes(number),
+    }))
+  );
+};
+
+const createDeterministicSession = (
+  config: GameSessionConfig
+): GameSession => {
+  const baseSession = createGameSession(config);
+  return {
+    ...baseSession,
+    appState: {
+      ...baseSession.appState,
+      bingoCard: createDeterministicBingoCard(
+        config.gridNumbers,
+        config.preMarkedNumbers
+      ),
+    },
+  };
 };
 
 // const waitMs = (ms: number): Promise<void> =>
@@ -170,16 +200,16 @@ const createSessionConfig = (
 });
 
 export default function Page(): ReactElement {
-  const initialSessionConfig = createSessionConfig(
-    DEFAULT_WORD_ROUND_SECONDS,
-    DEFAULT_LANGUAGES,
+  const initialSessionConfig = useMemo(
+    () => createSessionConfig(DEFAULT_WORD_ROUND_SECONDS, DEFAULT_LANGUAGES),
+    []
   );
   const sessionConfigRef = useRef(initialSessionConfig);
   const [wordRoundSeconds, setWordRoundSeconds] = useState(
     DEFAULT_WORD_ROUND_SECONDS
   );
   const [session, setSession] = useState<GameSession>(() =>
-    createGameSession(initialSessionConfig)
+    createDeterministicSession(initialSessionConfig)
   );
   const [currentGuess, setCurrentGuess] = useState("");
   const [bonusGuess, setBonusGuess] = useState("");
@@ -402,7 +432,7 @@ export default function Page(): ReactElement {
     );
   }, [wordRoundSeconds, selectedLanguages]);
 
-  const resetSession = () => {
+  const resetSession = useCallback(() => {
     commitSession(createGameSession(sessionConfigRef.current));
     setWordRoundEvent(null);
     clearDrawAnimation();
@@ -413,7 +443,16 @@ export default function Page(): ReactElement {
     setTimerPaused(false);
     initialDrawPerformedRef.current = false;
     setInitialDrawRunning(false);
-  };
+  }, [commitSession, clearDrawAnimation]);
+
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (hydratedRef.current) {
+      return;
+    }
+    hydratedRef.current = true;
+    resetSession();
+  }, [resetSession]);
 
   const resetBingoBoard = useCallback(() => {
     const newPool = createRandomBallPool();
@@ -648,11 +687,6 @@ export default function Page(): ReactElement {
     [],
   );
 
-  const timerProgress =
-    activeRound && activeRound.timeLimitMs > 0
-      ? Math.min(100, (activeRound.elapsedMs / activeRound.timeLimitMs) * 100)
-      : 0;
-
   const remainingTime = activeRound
     ? Math.max(0, activeRound.timeLimitMs - activeRound.elapsedMs)
     : 0;
@@ -694,31 +728,37 @@ export default function Page(): ReactElement {
     }
   }, [bonusRound?.solved]);
 
+  useEffect(() => {
+    if (session.appState.phaseKind !== "BALL_DRAW" && ballDrawReport) {
+      setBallDrawReport(null);
+    }
+  }, [session.appState.phaseKind, ballDrawReport]);
+
   return (
     <div className={styles.shell}>
       <ConfettiLayer ref={confettiRef} />
       <header className={styles.header}>
-          <div className={styles.headerPanel}>
-            <Scoreboard
-              phaseLabel={phaseLabel}
-              roundLabel={roundDisplay}
-              totalScore={session.appState.totalScore}
-              ballPoolCount={session.appState.ballPool.length}
-              linesCompleted={session.appState.completedLines.length}
-              bestScore={bestScore}
-            />
+        <div className={styles.headerPanel}>
+          <Scoreboard
+            phaseLabel={phaseLabel}
+            roundLabel={roundDisplay}
+            totalScore={session.appState.totalScore}
+            ballPoolCount={session.appState.ballPool.length}
+            linesCompleted={session.appState.completedLines.length}
+            bestScore={bestScore}
+          />
+        </div>
+        <div className={styles.headerActions}>
+          <div className={styles.settingsRow}>
+            <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
+              <SettingsIcon size={16} />
+              Settings
+            </Button>
+            <Button variant="ghost" onClick={resetSession}>
+              Reset
+            </Button>
           </div>
-          <div className={styles.headerActions}>
-            <div className={styles.settingsRow}>
-              <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
-                <SettingsIcon size={16} />
-                Settings
-              </Button>
-              <Button variant="ghost" onClick={resetSession}>
-                Reset
-              </Button>
-            </div>
-          </div>
+        </div>
       </header>
 
       <main className={styles.main}>
@@ -763,7 +803,6 @@ export default function Page(): ReactElement {
               phaseKind={phaseKind}
               activeRound={activeRound}
               queueRemaining={activeRound.wordQueue.length}
-              timerProgress={timerProgress}
               remainingTimeMs={remainingTime}
               currentGuess={currentGuess}
               onGuessChange={setCurrentGuess}
@@ -797,8 +836,11 @@ export default function Page(): ReactElement {
             <span className={styles.overlayTime}>{overlayTimeString}</span>
             <p className={styles.overlayLabel}>Session paused</p>
             <p className={styles.overlayCaption}>
-              Tap the timer control to resume and keep guessing.
+              Resume to continue the current word round.
             </p>
+            <Button variant="primary" onClick={toggleTimerPause}>
+              Resume session
+            </Button>
           </div>
           )}
         </div>

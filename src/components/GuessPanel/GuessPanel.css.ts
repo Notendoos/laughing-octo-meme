@@ -61,6 +61,7 @@ export const headerMeta = style({
   display: "flex",
   alignItems: "center",
   gap: themeContract.space.xs,
+  flexWrap: "wrap",
 });
 
 export const languageChip = style({
@@ -73,35 +74,17 @@ export const languageChip = style({
   letterSpacing: "0.06rem",
 });
 
-export const progressRow = style({
-  display: "flex",
-  flexDirection: "column",
-  gap: themeContract.space.xs,
-});
-
-export const progressTrack = style({
-  width: "100%",
-  height: "8px",
-  borderRadius: themeContract.radius.round,
-  background: themeContract.color.borderLight,
-  overflow: "hidden",
-});
-
-export const progressBar = style({
-  height: "100%",
-  borderRadius: themeContract.radius.round,
-  background: `linear-gradient(120deg, ${themeContract.color.accent}, ${themeContract.color.accentStrong})`,
-});
-
-export const timerStatus = style({
-  fontSize: "0.85rem",
-  color: themeContract.color.subtext,
-});
-
 export const correctLabel = style({
   fontSize: "0.85rem",
   color: themeContract.color.info,
   fontWeight: 600,
+});
+
+export const sessionStatus = style({
+  fontSize: "0.85rem",
+  color: themeContract.color.subtext,
+  textTransform: "uppercase",
+  letterSpacing: "0.2rem",
 });
 
 export const grid = style({

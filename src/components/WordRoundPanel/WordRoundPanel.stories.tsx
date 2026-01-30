@@ -61,7 +61,6 @@ export const Default: Story = {
     phaseKind: "WORD_ROUND",
     activeRound,
     queueRemaining: 2,
-    timerProgress: 45,
     remainingTimeMs: 3500,
     currentGuess: "",
     onGuessChange: () => {},

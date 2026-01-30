@@ -12,7 +12,6 @@ type WordRoundPanelProps = {
   phaseKind: string;
   activeRound: ActiveWordRound | null;
   queueRemaining: number;
-  timerProgress: number;
   remainingTimeMs: number;
   currentGuess: string;
   onGuessChange: (value: string) => void;
@@ -31,7 +30,6 @@ export default function WordRoundPanel({
   phaseKind,
   activeRound,
   queueRemaining,
-  timerProgress,
   remainingTimeMs,
   currentGuess,
   onGuessChange,
@@ -70,8 +68,6 @@ export default function WordRoundPanel({
         roundNumber={roundNumber}
         remainingGuesses={Math.max(0, remainingGuesses)}
         roundActive={phaseKind === "WORD_ROUND"}
-        timerProgress={timerProgress}
-        remainingTimeMs={remainingTimeMs}
         correctWordCount={activeRound.correctWordCount}
         sessionPaused={timerPaused}
         languageLabel={languageLabel}

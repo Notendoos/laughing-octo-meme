@@ -15,6 +15,26 @@ import {
 } from "./engine";
 import { computeBonusProgress } from "../utils/bonus-unlock";
 
+const WORD_SCORE = 100;
+
+const applyWordRoundScore = (
+  session: GameSession,
+  roundResult: WordRoundResult
+): GameSession => {
+  if (roundResult.correctWords === 0) {
+    return session;
+  }
+
+  const scoreDelta = roundResult.correctWords * WORD_SCORE;
+  return {
+    ...session,
+    appState: {
+      ...session.appState,
+      totalScore: session.appState.totalScore + scoreDelta,
+    },
+  };
+};
+
 export type WordRoundEvent =
   | {
       type: "CONTINUE";
@@ -168,7 +188,8 @@ const transitionAfterWordRound = (
     },
   };
 
-  return advancePhase(updatedSession);
+  const scoredSession = applyWordRoundScore(updatedSession, roundResult);
+  return advancePhase(scoredSession);
 };
 
 export const handleWordGuess = (

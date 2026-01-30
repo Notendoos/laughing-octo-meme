@@ -9,8 +9,6 @@ describe("GuessHeader", () => {
         roundNumber={1}
         remainingGuesses={2}
         roundActive
-        timerProgress={80}
-        remainingTimeMs={120000}
         correctWordCount={2}
         sessionPaused={false}
       />,

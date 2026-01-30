@@ -6,8 +6,6 @@ type GuessHeaderProps = {
   roundNumber: number;
   remainingGuesses: number;
   roundActive: boolean;
-  timerProgress: number;
-  remainingTimeMs: number;
   correctWordCount: number;
   sessionPaused: boolean;
   languageLabel?: string;
@@ -18,8 +16,6 @@ function GuessHeader({
   roundNumber,
   remainingGuesses,
   roundActive,
-  timerProgress,
-  remainingTimeMs,
   correctWordCount,
   sessionPaused,
   languageLabel,
@@ -37,21 +33,12 @@ function GuessHeader({
         {showLanguageChip && languageLabel && (
           <span className={styles.languageChip}>{languageLabel}</span>
         )}
-      </div>
-      <div className={styles.progressRow}>
-        <div className={styles.progressTrack}>
-          <div
-            className={styles.progressBar}
-            style={{ width: `${Math.min(timerProgress, 100)}%` }}
-          />
-        </div>
-        <p className={styles.timerStatus}>
-          Time left: {Math.max(0, Math.ceil(remainingTimeMs / 1000))}s
-          {sessionPaused ? " (paused)" : ""}
-        </p>
-        <p className={styles.correctLabel}>
+        <span className={styles.correctLabel}>
           Correct words: <strong>{correctWordCount}</strong>
-        </p>
+        </span>
+        {sessionPaused && (
+          <span className={styles.sessionStatus}>Gespeeld gepauzeerd</span>
+        )}
       </div>
     </div>
   );

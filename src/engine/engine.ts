@@ -113,6 +113,7 @@ export const advanceToNextWord = (
   }
 
   const [nextEntry, ...remainingQueue] = round.wordQueue;
+  console.log("Advancing to next word:", nextEntry.word);
   return {
     ...round,
     wordQueue: remainingQueue,
