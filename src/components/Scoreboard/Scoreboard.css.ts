@@ -1,48 +1,38 @@
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 import { themeContract } from "../../styles/theme.css.ts";
 
 export const root = style({
+  position: "absolute",
+  inset: 0,
+  zIndex: 0,
+  padding: themeContract.space.md,
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-  gap: themeContract.space.sm,
-  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
-  borderRadius: themeContract.radius.lg,
-  background: `linear-gradient(135deg, ${themeContract.color.gradientStart}, ${themeContract.color.gradientEnd})`,
-  border: `1px solid ${themeContract.color.border}`,
-  boxShadow: themeContract.effect.cardGlow,
+  gap: themeContract.space.md,
+  pointerEvents: "none",
+  userSelect: "none",
+  opacity: 0.2,
+  filter: "blur(3px)",
+  color: themeContract.color.subtext,
+  transition: "opacity 0.2s ease",
 });
 
 export const slot = style({
-  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
-  borderRadius: themeContract.radius.md,
-  background: themeContract.color.surfaceAlt,
-  border: `1px solid ${themeContract.color.borderLight}`,
-  boxShadow: `inset 0 1px 0 ${themeContract.color.overlay}`,
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.xs,
 });
 
 export const label = style({
-  fontSize: "0.75rem",
+  fontSize: "0.65rem",
   textTransform: "uppercase",
-  letterSpacing: "0.15rem",
+  letterSpacing: "0.18rem",
   color: themeContract.color.subtext,
 });
 
 export const value = style({
-  fontSize: "1.2rem",
-  fontWeight: 700,
-  letterSpacing: "0.05rem",
-  minHeight: "1.2em",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  animation: "scoreRoll 0.45s ease",
-});
-
-globalStyle("@keyframes scoreRoll", {
-  "0%": { opacity: 0, transform: "translateY(-12px)" },
-  "60%": { opacity: 1, transform: "translateY(0)" },
-  "100%": { opacity: 1, transform: "translateY(0)" },
+  fontSize: "1rem",
+  fontWeight: 600,
+  letterSpacing: "0.08rem",
+  color: themeContract.color.text,
 });

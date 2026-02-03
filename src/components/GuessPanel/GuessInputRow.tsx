@@ -7,6 +7,12 @@ import {
 } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 import * as inputStyles from "./GuessInputRow.css.ts";
+import {
+  composeValue,
+  countGuessLetters,
+  normalizeGuessString,
+  segmentGuess,
+} from "./guess-utils.ts";
 
 export type GuessInputRowHandle = {
   focusFirstEmpty: () => void;
@@ -20,16 +26,6 @@ type GuessInputRowProps = {
   onSubmit: () => void;
   allowDutch?: boolean;
 };
-
-const normalizeString = (value: string): string => {
-  return value.replace(/[^a-z]/gi, "").toLowerCase().slice(0, 20);
-};
-
-const composeValue = (segments: string[]): string =>
-  segments
-    .map((segment) => (segment === "IJ" ? "ij" : segment))
-    .join("")
-    .trim();
 
 export const GuessInputRow = forwardRef<GuessInputRowHandle, GuessInputRowProps>(
   (
@@ -47,30 +43,8 @@ export const GuessInputRow = forwardRef<GuessInputRowHandle, GuessInputRowProps>
     const ijPending = useRef<number | null>(null);
 
     const letters = useMemo(() => {
-      const normalized = normalizeString(value);
-      const result: string[] = [];
-      let cursor = 0;
-
-      while (result.length < wordLength && cursor < normalized.length) {
-        if (
-          allowDutch &&
-          normalized[cursor] === "i" &&
-          normalized[cursor + 1] === "j"
-        ) {
-          result.push("IJ");
-          cursor += 2;
-          continue;
-        }
-
-        result.push(normalized[cursor].toUpperCase());
-        cursor += 1;
-      }
-
-      while (result.length < wordLength) {
-        result.push("");
-      }
-
-      return result;
+      const segments = segmentGuess(value, allowDutch, wordLength);
+      return segments.map((segment) => segment.display);
     }, [value, wordLength, allowDutch]);
 
     const setFocus = useCallback((index: number) => {
@@ -106,7 +80,7 @@ export const GuessInputRow = forwardRef<GuessInputRowHandle, GuessInputRowProps>
 
     const handleInput =
       (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
-        const raw = normalizeString(event.target.value);
+        const raw = normalizeGuessString(event.target.value);
         const letter = raw
           ? raw.slice(-2) === "ij" && allowDutch
             ? "IJ"
@@ -193,3 +167,5 @@ export const GuessInputRow = forwardRef<GuessInputRowHandle, GuessInputRowProps>
 );
 
 GuessInputRow.displayName = "GuessInputRow";
+
+export { countGuessLetters } from "./guess-utils.ts";

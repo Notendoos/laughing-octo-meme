@@ -4,7 +4,6 @@ import {
   Settings,
   SlidersHorizontal,
   RefreshCcw,
-  Pause,
   Globe,
 } from "lucide-react";
 import * as styles from "./SettingsModal.css.ts";
@@ -25,10 +24,7 @@ type SettingsModalProps = {
   wordRoundSeconds: number;
   setWordRoundSeconds: (value: number) => void;
   maxSeconds: number;
-  timerPaused: boolean;
-  onToggleTimerPause: () => void;
   onResetSession: () => void;
-  timerStatusText: string;
   themePreference: ThemePreference;
   appliedTheme: ThemeKey;
   onThemePreferenceChange: (value: ThemePreference) => void;
@@ -42,10 +38,7 @@ export function SettingsModal({
   wordRoundSeconds,
   setWordRoundSeconds,
   maxSeconds,
-  timerPaused,
-  onToggleTimerPause,
   onResetSession,
-  timerStatusText,
   themePreference,
   appliedTheme,
   onThemePreferenceChange,
@@ -55,14 +48,6 @@ export function SettingsModal({
   const handleThemeSelect = (event: ChangeEvent<HTMLSelectElement>) => {
     const value = event.target.value as ThemeKey;
     onThemePreferenceChange(value);
-  };
-
-  const handleLanguageSelect = (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value as LanguageKey;
-    if (value) {
-      onToggleLanguage(value);
-      event.target.selectedIndex = 0;
-    }
   };
   if (!open) {
     return null;
@@ -107,31 +92,14 @@ export function SettingsModal({
 
         <div className={styles.section}>
           <span className={styles.label}>
-            <Pause size={16} /> Timer controls
-          </span>
-          <div className={styles.sectionBody}>
-            <div className={styles.toggleRow}>
-              <p>{timerStatusText}</p>
-              <Button variant="ghost" onClick={onToggleTimerPause}>
-                {timerPaused ? "Resume" : "Pause"}
-              </Button>
-            </div>
-            <p className={styles.sectionSubtext}>
-              Pause or resume word rounds without affecting your progress.
-            </p>
-          </div>
-        </div>
-
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <Settings size={16} /> Theme preference
+            <Settings size={16} /> Experience
           </span>
           <div className={styles.sectionBody}>
             <div className={styles.toggleRow}>
               <p>
                 {themePreference === "auto"
-                  ? "Following your device preference"
-                  : "Manual theme selection"}
+                  ? "System theme mode"
+                  : "Manual palette selection"}
               </p>
               <Button
                 variant={themePreference === "auto" ? "primary" : "ghost"}
@@ -140,46 +108,30 @@ export function SettingsModal({
                 Auto (system)
               </Button>
             </div>
-            <select
-              className={styles.select}
-              value={appliedTheme}
-              onChange={handleThemeSelect}
-            >
-              {Object.entries(chromaVariants).map(([key, variant]) => (
-                <option key={key} value={key}>
-                  {variant.label}
-                </option>
-              ))}
-            </select>
             <p className={styles.sectionSubtext}>
-              Use the dropdown to preview the palette you want to use immediately.
+              Tap any palette below to immediately preview it while the system
+              toggle keeps the overall mode in sync.
             </p>
-          </div>
-        </div>
-
-        <div className={styles.section}>
-          <span className={styles.label}>
-            <Settings size={16} /> Visual themes
-          </span>
-          <div className={styles.themeGrid}>
-            {Object.entries(chromaVariants).map(([key, variant]) => (
-              <button
-                key={key}
-                type="button"
-                className={clsx(
-                  styles.themeOption,
-                  key === appliedTheme && styles.themeOptionActive,
-                )}
-                onClick={() =>
-                  onThemePreferenceChange(key as ThemePreference)
-                }
-              >
-                <span className={styles.themeTitle}>{variant.label}</span>
-                <span className={styles.themeDescription}>
-                  {variant.description}
-                </span>
-              </button>
-            ))}
+            <div className={styles.themeGrid}>
+              {Object.entries(chromaVariants).map(([key, variant]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={clsx(
+                    styles.themeOption,
+                    key === appliedTheme && styles.themeOptionActive,
+                  )}
+                  onClick={() =>
+                    onThemePreferenceChange(key as ThemePreference)
+                  }
+                >
+                  <span className={styles.themeTitle}>{variant.label}</span>
+                  <span className={styles.themeDescription}>
+                    {variant.description}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -188,27 +140,9 @@ export function SettingsModal({
             <Globe size={16} /> Word languages
           </span>
           <div className={styles.sectionBody}>
-            <select
-              className={styles.select}
-              onChange={handleLanguageSelect}
-              defaultValue=""
-            >
-              <option value="" disabled>
-                Add language…
-              </option>
-              {Object.entries(languageLabels).map(([key, label]) => (
-                <option
-                  key={key}
-                  value={key}
-                  disabled={selectedLanguages.includes(key as LanguageKey)}
-                >
-                  {label}
-                </option>
-              ))}
-            </select>
             <p className={styles.sectionSubtext}>
-              Adding languages ensures the word queue pulls from those dictionaries,
-              and Dutch automatically toggles IJ input.
+              Pick the dictionaries that should feed the word queue. Dutch still
+              enables the IJ-aware input automatically.
             </p>
             <div className={styles.languageGrid}>
               {Object.entries(languageLabels).map(([key, label]) => {
@@ -232,10 +166,6 @@ export function SettingsModal({
                 );
               })}
             </div>
-            <p className={styles.note}>
-              Choosing Dutch automatically enables IJ-aware guesses; no additional
-              toggle is required.
-            </p>
           </div>
         </div>
 

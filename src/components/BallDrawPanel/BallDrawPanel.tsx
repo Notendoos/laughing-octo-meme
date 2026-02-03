@@ -34,6 +34,7 @@ export default function BallDrawPanel({
             key={`${ball}-${index}`}
             className={clsx(
               styles.chip,
+              "ball-chip",
               isSpecialBall(ball) && styles.specialChip
             )}
           >

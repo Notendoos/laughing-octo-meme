@@ -1,12 +1,15 @@
+import clsx from "clsx";
 import gsap from "gsap";
 import { memo, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import type { LetterFeedback } from "../../engine/types.ts";
 import * as styles from "./GuessPanel.css.ts";
+import { segmentGuess } from "./guess-utils.ts";
 
 type GuessRow = {
   guess: string;
   letterFeedback: LetterFeedback[];
+  highlight?: boolean;
 };
 
 type GuessGridProps = {
@@ -14,14 +17,20 @@ type GuessGridProps = {
   wordLength: number;
   maxRows: number;
   sessionPaused: boolean;
+  showCorrectAnimation?: boolean;
+  onCorrectAnimationComplete?: () => void;
+  allowDutch?: boolean;
 };
 
 const padRows = (rows: GuessRow[], maxRows: number): GuessRow[] => {
   const result = [...rows];
+  if (result.length > maxRows) {
+    result.splice(0, result.length - maxRows);
+  }
   while (result.length < maxRows) {
     result.push({ guess: "", letterFeedback: [] });
   }
-  return result.slice(0, maxRows);
+  return result;
 };
 
 const MAX_VISIBLE_ROWS = 5;
@@ -36,6 +45,9 @@ function GuessGridComponent({
   wordLength,
   maxRows,
   sessionPaused,
+  showCorrectAnimation,
+  onCorrectAnimationComplete,
+  allowDutch = false,
 }: GuessGridProps): ReactElement {
   const rows = padRows(guesses, maxRows);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -86,6 +98,44 @@ function GuessGridComponent({
   }, [translateY]);
 
   useLayoutEffect(() => {
+    if (!showCorrectAnimation || guesses.length === 0) {
+      return;
+    }
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
+      return;
+    }
+    const targetRowIndex = Math.min(guesses.length - 1, rows.length - 1);
+    const targetRow = wrapper.querySelector<HTMLDivElement>(
+      `[data-row="${targetRowIndex}"]`,
+    );
+    if (!targetRow) {
+      return;
+    }
+    const timeline = gsap.timeline({
+      onComplete: () => {
+        onCorrectAnimationComplete?.();
+      },
+    });
+    timeline
+      .fromTo(
+        targetRow,
+        { scale: 1 },
+        { scale: 1.08, duration: 0.25, ease: "power1.out" },
+      )
+      .to(targetRow, { scale: 1, duration: 0.2, ease: "power1.in" });
+
+    return () => {
+      timeline.kill();
+    };
+  }, [
+    showCorrectAnimation,
+    guesses.length,
+    rows.length,
+    onCorrectAnimationComplete,
+  ]);
+
+  useLayoutEffect(() => {
     const wrapper = wrapperRef.current;
     const hasMoreGuesses = guesses.length > previousCountRef.current;
     if (!wrapper) {
@@ -102,11 +152,32 @@ function GuessGridComponent({
     if (!newRow) {
       return;
     }
-    gsap.fromTo(
-      newRow,
-      { autoAlpha: 0, y: 12 },
-      { autoAlpha: 1, y: 0, duration: 0.35, ease: "power3.out" },
+    const letters = Array.from(
+      newRow.querySelectorAll<HTMLSpanElement>(`.${styles.cell}`),
     );
+    const timeline = gsap.timeline();
+    timeline
+      .fromTo(
+        newRow,
+        { autoAlpha: 0, y: 12 },
+        { autoAlpha: 1, y: 0, duration: 0.35, ease: "power3.out" },
+      )
+      .fromTo(
+        letters,
+        { scale: 0.7, autoAlpha: 0 },
+        {
+          scale: 1,
+          autoAlpha: 1,
+          duration: 0.35,
+          ease: "back.out(1.6)",
+          stagger: 0.03,
+        },
+        "<",
+      );
+
+    return () => {
+      timeline.kill();
+    };
   }, [guesses.length]);
 
   const gridStyle: CSSProperties = useMemo(
@@ -130,28 +201,37 @@ function GuessGridComponent({
         data-testid="guess-grid"
       >
         {rows.map((row, rowIndex) => (
-          <div key={`row-${rowIndex}`} className={styles.row} data-row={rowIndex}>
-            {Array.from({ length: wordLength }, (_, cellIndex) => {
-              const letter = row.guess?.[cellIndex] ?? "";
-              const rawStatus = row.letterFeedback?.[cellIndex] ?? "";
-              const mappedStatus =
-                rawStatus === "exact" ? "correct" : rawStatus || "";
-              const statusClass = mappedStatus
-                ? mappedStatus
-                : letter
-                ? "absent"
-                : "empty";
-              return (
-                <span
-                  key={`cell-${rowIndex}-${cellIndex}`}
-                  className={`${styles.cell} ${styles.cellVariant[
-                    statusClass as keyof typeof styles.cellVariant
-                  ]}`}
-                >
-                  {letter.toUpperCase()}
-                </span>
-              );
-            })}
+          <div
+            key={`row-${rowIndex}`}
+            className={clsx(
+              styles.row,
+              row.highlight && styles.pendingRow,
+            )}
+            data-row={rowIndex}
+          >
+            {segmentGuess(row.guess, allowDutch, wordLength).map(
+              (segment, cellIndex) => {
+                const letter = segment.display;
+                const rawStatus = row.letterFeedback?.[cellIndex] ?? "";
+                const mappedStatus =
+                  rawStatus === "exact" ? "correct" : rawStatus || "";
+                const statusClass = mappedStatus
+                  ? mappedStatus
+                  : letter
+                  ? "absent"
+                  : "empty";
+                return (
+                  <span
+                    key={`cell-${rowIndex}-${cellIndex}`}
+                    className={`${styles.cell} ${styles.cellVariant[
+                      statusClass as keyof typeof styles.cellVariant
+                    ]}`}
+                  >
+                    {letter}
+                  </span>
+                );
+              },
+            )}
           </div>
         ))}
       </div>

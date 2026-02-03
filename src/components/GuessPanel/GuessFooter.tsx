@@ -1,6 +1,6 @@
 import { memo, type ReactElement, type Ref } from "react";
 import type { GuessInputRowHandle } from "./GuessInputRow.tsx";
-import { GuessInputRow } from "./GuessInputRow.tsx";
+import { GuessInputRow, countGuessLetters } from "./GuessInputRow.tsx";
 import { Button } from "../ui/Button/Button.tsx";
 
 type GuessFooterProps = {
@@ -45,7 +45,10 @@ function GuessFooter({
         type="button"
         variant="primary"
         onClick={onSubmitGuess}
-        disabled={disabled || !currentGuess.trim()}
+        disabled={
+          disabled ||
+      countGuessLetters(currentGuess, allowDutch ?? false) !== (wordLength ?? 5)
+        }
       >
         Submit
       </Button>

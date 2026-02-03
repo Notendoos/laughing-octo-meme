@@ -10,7 +10,19 @@ export const shell = style({
 });
 
 export const header = style({
+  position: "relative",
   display: "flex",
+  flexDirection: "column",
+  gap: themeContract.space.sm,
+  paddingBottom: themeContract.space.sm,
+  minHeight: "150px",
+});
+
+export const headerContent = style({
+  position: "relative",
+  zIndex: 1,
+  display: "flex",
+  width: "100%",
   gap: themeContract.space.md,
   flexWrap: "wrap",
 });
@@ -20,11 +32,26 @@ export const headerPanel = style({
   borderRadius: themeContract.radius.lg,
   padding: themeContract.space.md,
   border: `1px solid ${themeContract.color.borderLight}`,
-  background: `linear-gradient(135deg, ${themeContract.color.gradientStart}, ${themeContract.color.gradientEnd})`,
-  boxShadow: themeContract.effect.cardGlow,
+  background: "rgba(0,0,0,0.35)",
+  display: "flex",
+  flexDirection: "column",
+  gap: themeContract.space.xs,
+});
+
+export const headerPhaseLabel = style({
+  fontSize: "1rem",
+  fontWeight: 600,
+  color: themeContract.color.subtext,
+});
+
+export const headerCaption = style({
+  fontSize: "0.85rem",
+  color: themeContract.color.info,
 });
 
 export const headerActions = style({
+  position: "relative",
+  zIndex: 1,
   display: "flex",
   flexDirection: "column",
   gap: themeContract.space.sm,
@@ -38,14 +65,41 @@ export const settingsRow = style({
 });
 
 export const main = style({
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 0.75fr)",
+  display: "flex",
+  flexDirection: "column",
   gap: themeContract.space.lg,
-  "@media": {
-    "(max-width: 960px)": {
-      gridTemplateColumns: "1fr",
-    },
-  },
+});
+
+export const tabBar = style({
+  display: "flex",
+  gap: themeContract.space.xs,
+});
+
+export const tabButton = style({
+  flex: 1,
+  padding: `${themeContract.space.sm} ${themeContract.space.md}`,
+  borderRadius: themeContract.radius.md,
+  border: `1px solid ${themeContract.color.border}`,
+  background: themeContract.color.surfaceAlt,
+  color: themeContract.color.subtext,
+  fontWeight: 600,
+  cursor: "pointer",
+  transition: "border-color 0.2s ease, color 0.2s ease",
+});
+
+export const tabButtonActive = style({
+  borderColor: themeContract.color.accent,
+  color: themeContract.color.text,
+});
+
+export const tabPanels = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: themeContract.space.md,
+});
+
+export const tabHidden = style({
+  display: "none !important",
 });
 
 export const panel = style({
@@ -67,10 +121,6 @@ export const secondaryPanel = style({
   minHeight: "420px",
 });
 
-export const panelWrapper = style({
-  position: "relative",
-});
-
 export const panelBlurred = style({
   filter: "blur(4px)",
   opacity: 0.75,
@@ -88,9 +138,27 @@ export const pauseOverlay = style({
   justifyContent: "center",
   gap: themeContract.space.sm,
   background: `linear-gradient(180deg, ${themeContract.color.overlay}, ${themeContract.color.gradientEnd})`,
-  border: `1px solid ${themeContract.color.border}`,
+  border: "none",
+  borderColor: "transparent",
   boxShadow: themeContract.effect.cardGlow,
   zIndex: 2,
+  textAlign: "center",
+  cursor: "pointer",
+  padding: themeContract.space.lg,
+  font: "inherit",
+  color: themeContract.color.text,
+  appearance: "none",
+  borderWidth: 0,
+  transition: "transform 0.2s ease",
+  outline: "none",
+  width: "100%",
+  "@media": {
+    "(hover: hover)": {
+      ":hover": {
+        transform: "scale(1.01)",
+      },
+    },
+  },
 });
 
 export const overlayLabel = style({
@@ -108,6 +176,21 @@ export const overlayTime = style({
   fontFamily: `"Space Mono", "JetBrains Mono", monospace`,
   letterSpacing: "0.12rem",
   color: themeContract.color.accent,
+});
+
+export const overlayAction = style({
+  fontSize: "0.95rem",
+  fontWeight: 600,
+  letterSpacing: "0.25rem",
+  textTransform: "uppercase",
+  color: themeContract.color.accent,
+});
+
+export const overlayHint = style({
+  fontSize: "0.65rem",
+  letterSpacing: "0.3rem",
+  textTransform: "uppercase",
+  color: themeContract.color.subtext,
 });
 
 export const panelHeader = style({

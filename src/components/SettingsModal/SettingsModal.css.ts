@@ -24,7 +24,7 @@ export const panel = style({
   flexDirection: "column",
   gap: themeContract.space.md,
   overflowY: "auto",
-  scrollbarWidth: "thin",
+  scrollbarWidth:  'none',
 });
 
 export const panelInner = style({

@@ -30,6 +30,7 @@ import type {
   CustomPhaseMetadata,
   GameSession,
   GameSessionConfig,
+  GuessResult,
   PhaseDefinition,
 } from "../engine/types.ts";
 import BallDrawPanel, {
@@ -40,6 +41,7 @@ import BingoGrid from "../components/BingoGrid/BingoGrid.tsx";
 import Scoreboard from "../components/Scoreboard/Scoreboard.tsx";
 import WordRoundPanel from "../components/WordRoundPanel/WordRoundPanel.tsx";
 import type { GuessInputRowHandle } from "../components/GuessPanel/GuessInputRow.tsx";
+import { countGuessLetters } from "../components/GuessPanel/GuessInputRow.tsx";
 import { CustomPhasePanel } from "../components/CustomPhase/CustomPhasePanel.tsx";
 import { SettingsModal } from "../components/SettingsModal/SettingsModal.tsx";
 import { Settings as SettingsIcon } from "lucide-react";
@@ -52,6 +54,7 @@ import {
   DEFAULT_THEME,
   ThemeKey,
   ThemePreference,
+  themeContract,
 } from "../styles/theme.css.ts";
 import {
   DEFAULT_LANGUAGES,
@@ -63,6 +66,8 @@ import { computeBonusProgress } from "../utils/bonus-unlock.ts";
 import { formatTimecode } from "../utils/time.ts";
 import clsx from "clsx";
 import ConfettiLayer, { type ConfettiHandle } from "../components/Confetti/Confetti.tsx";
+
+type ConfettiOptions = Parameters<ConfettiHandle["fire"]>[0];
 
 const GRID_NUMBERS = Array.from({ length: 5 }, (_, row) =>
   Array.from({ length: 5 }, (_, col) => row * 5 + col + 1)
@@ -268,15 +273,39 @@ export default function Page(): ReactElement {
   const [ballDrawReport, setBallDrawReport] = useState<BallDrawReport | null>(
     null
   );
-  const [bestScore, setBestScore] = useState(() => readBestScore());
+  const [pendingCorrectGuess, setPendingCorrectGuess] =
+    useState<GuessResult | null>(null);
+  const [showCorrectWordAnimation, setShowCorrectWordAnimation] =
+    useState(false);
+  const [bestScore, setBestScore] = useState(0);
+  const [bestScoreHydrated, setBestScoreHydrated] = useState(false);
   const [animatedDrawNumbers, setAnimatedDrawNumbers] = useState<number[]>([]);
   const [initialDrawRunning, setInitialDrawRunning] = useState(false);
+  const [celebrationActive, setCelebrationActive] = useState(false);
   type TimerId = ReturnType<typeof globalThis.setTimeout>;
   const drawAnimationTimers = useRef<TimerId[]>([]);
   const confettiRef = useRef<ConfettiHandle | null>(null);
 
   const sessionRef = useRef(session);
   const initialDrawPerformedRef = useRef(false);
+  const pendingPostWordTransitionRef = useRef<GameSession | null>(null);
+  const autoPauseMetaRef = useRef({
+    active: false,
+    shouldResume: false,
+    userOverridden: false,
+  });
+
+  useEffect(() => {
+    if (typeof window === undefined) {
+      return;
+    }
+    const storedBest = readBestScore();
+    const id = requestAnimationFrame(() => {
+      setBestScore(storedBest);
+      setBestScoreHydrated(true);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const updateBestScoreIfHigher = useCallback((score: number) => {
     setBestScore((current) => {
@@ -326,6 +355,37 @@ export default function Page(): ReactElement {
     [clearDrawAnimation],
   );
 
+  const resolveConfettiPalette = useCallback(() => {
+    if (typeof window === "undefined") {
+      return [
+        chromaVariants[DEFAULT_THEME].color.confettiPrimary,
+        chromaVariants[DEFAULT_THEME].color.confettiSecondary,
+      ];
+    }
+    const computed = getComputedStyle(document.documentElement);
+    const primary = computed
+      .getPropertyValue(themeContract.color.confettiPrimary)
+      .trim();
+    const secondary = computed
+      .getPropertyValue(themeContract.color.confettiSecondary)
+      .trim();
+    return [
+      primary || chromaVariants[DEFAULT_THEME].color.confettiPrimary,
+      secondary || chromaVariants[DEFAULT_THEME].color.confettiSecondary,
+    ];
+  }, []);
+
+  const fireConfetti = useCallback(
+    (options?: ConfettiOptions) => {
+      const [primary, secondary] = resolveConfettiPalette();
+      confettiRef.current?.fire({
+        colors: [primary, secondary],
+        ...options,
+      });
+    },
+    [resolveConfettiPalette],
+  );
+
   useEffect(() => {
     return () => {
       clearDrawAnimation();
@@ -338,13 +398,13 @@ export default function Page(): ReactElement {
 
   useEffect(() => {
     if (ballDrawReport?.lines && ballDrawReport.lines.length > 0) {
-      confettiRef.current?.fire({
+      fireConfetti({
         particleCount: 200,
         spread: 140,
         origin: { y: 0.25 },
       });
     }
-  }, [ballDrawReport?.lines]);
+  }, [ballDrawReport?.lines, fireConfetti]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -369,6 +429,7 @@ export default function Page(): ReactElement {
     document.documentElement.setAttribute("data-theme", activeTheme);
     window.localStorage.setItem(THEME_STORAGE_KEY, themePreference);
   }, [activeTheme, themePreference]);
+
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -440,9 +501,18 @@ export default function Page(): ReactElement {
     setBonusMessage("");
     setCurrentGuess("");
     setBonusGuess("");
+    setPendingCorrectGuess(null);
+    setShowCorrectWordAnimation(false);
     setTimerPaused(false);
     initialDrawPerformedRef.current = false;
     setInitialDrawRunning(false);
+    pendingPostWordTransitionRef.current = null;
+    autoPauseMetaRef.current = {
+      active: false,
+      shouldResume: false,
+      userOverridden: false,
+    };
+    setCelebrationActive(false);
   }, [commitSession, clearDrawAnimation]);
 
   const hydratedRef = useRef(false);
@@ -492,12 +562,68 @@ export default function Page(): ReactElement {
     [playDrawAnimation, setBallDrawReport]
   );
 
+  const flushPendingWordTransition = useCallback(() => {
+    if (!pendingPostWordTransitionRef.current) {
+      return;
+    }
+    const pending = pendingPostWordTransitionRef.current;
+    pendingPostWordTransitionRef.current = null;
+    commitSession(pending);
+  }, [commitSession]);
+
+  const handleCorrectWordAnimationComplete = useCallback(() => {
+    if (
+      autoPauseMetaRef.current.active &&
+      autoPauseMetaRef.current.shouldResume &&
+      !autoPauseMetaRef.current.userOverridden
+    ) {
+      setTimerPaused(false);
+    }
+    autoPauseMetaRef.current = {
+      active: false,
+      shouldResume: false,
+      userOverridden: false,
+    };
+    setCelebrationActive(false);
+    setShowCorrectWordAnimation(false);
+    setPendingCorrectGuess(null);
+    flushPendingWordTransition();
+  }, [flushPendingWordTransition]);
+
+  const celebrateCorrectWord = useCallback(
+    (guessResult: GuessResult) => {
+      setPendingCorrectGuess(guessResult);
+      setShowCorrectWordAnimation(true);
+      setCelebrationActive(true);
+      setTimerPaused((prevPaused) => {
+        autoPauseMetaRef.current = {
+          active: true,
+          shouldResume: !prevPaused,
+          userOverridden: false,
+        };
+        return true;
+      });
+      fireConfetti({
+        particleCount: 220,
+        spread: 150,
+        origin: { y: 0.2 },
+      });
+    },
+    [fireConfetti],
+  );
+
   const applyWordRoundUpdate = useCallback(
     (update: WordRoundUpdate) => {
       if (update.event?.type === "COMPLETE") {
         setWordRoundEvent(update.event);
         const finished = finalizeBallDraw(update.session, update.event);
-        commitSession(finished);
+        if (update.event.guessResult?.isCorrect) {
+          pendingPostWordTransitionRef.current = finished;
+          celebrateCorrectWord(update.event.guessResult);
+        } else {
+          pendingPostWordTransitionRef.current = null;
+          commitSession(finished);
+        }
         return;
       }
 
@@ -507,7 +633,7 @@ export default function Page(): ReactElement {
 
       commitSession(update.session);
     },
-    [finalizeBallDraw, commitSession]
+    [finalizeBallDraw, commitSession, celebrateCorrectWord]
   );
 
   useEffect(() => {
@@ -580,6 +706,13 @@ export default function Page(): ReactElement {
     if (!currentGuess.trim()) {
       return;
     }
+    if (
+      activeRound &&
+      countGuessLetters(currentGuess, selectedLanguages.includes("dutch")) !==
+        activeRound.wordLength
+    ) {
+      return;
+    }
 
     const update = handleWordGuess(
       session,
@@ -640,7 +773,14 @@ export default function Page(): ReactElement {
     if (phaseKind !== "WORD_ROUND") {
       return;
     }
-    setTimerPaused((prev) => !prev);
+    setCelebrationActive(false);
+    setTimerPaused((prev) => {
+      if (autoPauseMetaRef.current.active) {
+        autoPauseMetaRef.current.userOverridden = true;
+        autoPauseMetaRef.current.active = false;
+      }
+      return !prev;
+    });
   };
 
   const toggleLanguageSelection = useCallback((lang: LanguageKey) => {
@@ -662,7 +802,18 @@ export default function Page(): ReactElement {
   const customPhaseMetadata: CustomPhaseMetadata | undefined =
     isCustomPhase ? currentPhaseDefinition?.metadata : undefined;
 
-  const showPauseOverlay = timerPaused && phaseKind === "WORD_ROUND";
+  const MAIN_TAB_WORD = "word";
+  const MAIN_TAB_BINGO = "bingo";
+  type MainTabKey = typeof MAIN_TAB_WORD | typeof MAIN_TAB_BINGO;
+  const [tabSelection, setTabSelection] = useState<
+    { tab: MainTabKey; phase: string } | null
+  >(null);
+  const defaultTab = MAIN_TAB_WORD;
+  const activeMainTab =
+    tabSelection?.phase === phaseKind ? tabSelection.tab : defaultTab;
+
+  const showPauseOverlay =
+    timerPaused && phaseKind === "WORD_ROUND" && !celebrationActive;
 
   const multiLanguageMode = selectedLanguages.length > 1;
   const activeLanguageKey =
@@ -705,68 +856,88 @@ export default function Page(): ReactElement {
       : phaseKind === "GAME_OVER"
       ? "Completed"
       : session.appState.roundIndex;
-  const timerStatusText =
-    phaseKind === "WORD_ROUND"
-      ? timerPaused
-        ? "Timer paused"
-        : "Timer running"
-      : "Timer idle";
   const roundDurations = `${wordRoundSeconds}s / ${wordRoundSeconds + 1}s / ${
     wordRoundSeconds + 2
   }s`;
   const completedLineCount = session.appState.completedLines.length;
   const hasBingo = completedLineCount > 0;
   const bingoExhausted = completedLineCount >= TOTAL_BINGO_LINES;
+  const displayedBestScore = bestScoreHydrated ? bestScore : undefined;
 
   useEffect(() => {
     if (bonusRound?.solved) {
-      confettiRef.current?.fire({
+      fireConfetti({
         particleCount: 260,
         spread: 160,
         origin: { y: 0.35 },
       });
     }
-  }, [bonusRound?.solved]);
-
-  useEffect(() => {
-    if (session.appState.phaseKind !== "BALL_DRAW" && ballDrawReport) {
-      setBallDrawReport(null);
-    }
-  }, [session.appState.phaseKind, ballDrawReport]);
+  }, [bonusRound?.solved, fireConfetti]);
 
   return (
     <div className={styles.shell}>
       <ConfettiLayer ref={confettiRef} />
       <header className={styles.header}>
-        <div className={styles.headerPanel}>
-          <Scoreboard
-            phaseLabel={phaseLabel}
-            roundLabel={roundDisplay}
-            totalScore={session.appState.totalScore}
-            ballPoolCount={session.appState.ballPool.length}
-            linesCompleted={session.appState.completedLines.length}
-            bestScore={bestScore}
-          />
-        </div>
-        <div className={styles.headerActions}>
-          <div className={styles.settingsRow}>
-            <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
-              <SettingsIcon size={16} />
-              Settings
-            </Button>
-            <Button variant="ghost" onClick={resetSession}>
-              Reset
-            </Button>
+        <Scoreboard
+          phaseLabel={phaseLabel}
+          roundLabel={roundDisplay}
+          totalScore={session.appState.totalScore}
+          ballPoolCount={session.appState.ballPool.length}
+          linesCompleted={session.appState.completedLines.length}
+          bestScore={displayedBestScore}
+        />
+        <div className={styles.headerContent}>
+          <div className={styles.headerPanel}>
+            <p className={styles.headerPhaseLabel}>{phaseLabel}</p>
+            <p className={styles.headerCaption}>
+              Focus on the board · round {roundDisplay}
+            </p>
+          </div>
+          <div className={styles.headerActions}>
+            <div className={styles.settingsRow}>
+              <Button variant="ghost" onClick={() => setSettingsOpen(true)}>
+                <SettingsIcon size={16} />
+                Settings
+              </Button>
+              <Button variant="ghost" onClick={resetSession}>
+                Reset
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
       <main className={styles.main}>
-        <div className={styles.panelWrapper}>
+        <div className={styles.tabBar}>
+          <button
+            type="button"
+            className={clsx(
+              styles.tabButton,
+              activeMainTab === MAIN_TAB_WORD && styles.tabButtonActive,
+            )}
+            aria-pressed={activeMainTab === MAIN_TAB_WORD}
+            onClick={() => setTabSelection({ tab: MAIN_TAB_WORD, phase: phaseKind })}
+          >
+            Word round
+          </button>
+          <button
+            type="button"
+            className={clsx(
+              styles.tabButton,
+              activeMainTab === MAIN_TAB_BINGO && styles.tabButtonActive,
+            )}
+            aria-pressed={activeMainTab === MAIN_TAB_BINGO}
+            onClick={() => setTabSelection({ tab: MAIN_TAB_BINGO, phase: phaseKind })}
+          >
+            Bingo board
+          </button>
+        </div>
+        <div className={styles.tabPanels}>
           <section
             className={clsx(
               styles.panel,
               styles.primaryPanel,
+              activeMainTab !== MAIN_TAB_WORD && styles.tabHidden,
               showPauseOverlay && styles.panelBlurred,
             )}
           >
@@ -799,23 +970,26 @@ export default function Page(): ReactElement {
                 displayNumbers={animatedDrawNumbers}
               />
             ) : phaseKind === "WORD_ROUND" && activeRound ? (
-            <WordRoundPanel
-              phaseKind={phaseKind}
-              activeRound={activeRound}
-              queueRemaining={activeRound.wordQueue.length}
-              remainingTimeMs={remainingTime}
-              currentGuess={currentGuess}
-              onGuessChange={setCurrentGuess}
-              onSubmitGuess={handleSubmitGuess}
-              wordRoundEvent={wordRoundEvent}
-              roundNumber={session.appState.roundIndex}
-              timerPaused={timerPaused}
-              allowDutch={dutchInputEnabled}
-              languageLabel={currentLanguageLabel ?? undefined}
-              showLanguageChip={showLanguageChip}
-              guessInputRef={guessInputRef}
-              onToggleTimer={toggleTimerPause}
-            />
+              <WordRoundPanel
+                phaseKind={phaseKind}
+                activeRound={activeRound}
+                queueRemaining={activeRound.wordQueue.length}
+                remainingTimeMs={remainingTime}
+                currentGuess={currentGuess}
+                onGuessChange={setCurrentGuess}
+                onSubmitGuess={handleSubmitGuess}
+                wordRoundEvent={wordRoundEvent}
+                roundNumber={session.appState.roundIndex}
+                timerPaused={timerPaused}
+                allowDutch={dutchInputEnabled}
+                languageLabel={currentLanguageLabel ?? undefined}
+                showLanguageChip={showLanguageChip}
+                guessInputRef={guessInputRef}
+                onToggleTimer={toggleTimerPause}
+                pendingGuess={pendingCorrectGuess}
+                showCorrectWordAnimation={showCorrectWordAnimation}
+                onCorrectWordAnimationComplete={handleCorrectWordAnimationComplete}
+              />
             ) : (
               <div className={styles.placeholder}>
                 {phaseKind === "SETUP" ? (
@@ -830,51 +1004,59 @@ export default function Page(): ReactElement {
                 )}
               </div>
             )}
+            {showPauseOverlay && (
+              <button
+                type="button"
+                className={styles.pauseOverlay}
+                onClick={toggleTimerPause}
+              >
+                <span className={styles.overlayTime}>{overlayTimeString}</span>
+                <p className={styles.overlayLabel}>Session paused</p>
+                <p className={styles.overlayCaption}>
+                  Resume to continue the current word round.
+                </p>
+                <span className={styles.overlayAction}>Resume session</span>
+                <span className={styles.overlayHint}>Tap anywhere to resume</span>
+              </button>
+            )}
           </section>
-        {showPauseOverlay && (
-          <div className={styles.pauseOverlay}>
-            <span className={styles.overlayTime}>{overlayTimeString}</span>
-            <p className={styles.overlayLabel}>Session paused</p>
-            <p className={styles.overlayCaption}>
-              Resume to continue the current word round.
-            </p>
-            <Button variant="primary" onClick={toggleTimerPause}>
-              Resume session
-            </Button>
-          </div>
-          )}
-        </div>
-
-        <section className={`${styles.panel} ${styles.secondaryPanel}`}>
-          <div className={styles.panelHeader}>
-            <div>
-              <p className={styles.panelLabel}>Bingo</p>
-              <h3 className={styles.panelTitle}>Bingo board</h3>
+          <section
+            className={clsx(
+              styles.panel,
+              styles.secondaryPanel,
+              activeMainTab !== MAIN_TAB_BINGO && styles.tabHidden,
+            )}
+          >
+            <div className={styles.panelHeader}>
+              <div>
+                <p className={styles.panelLabel}>Bingo</p>
+                <h3 className={styles.panelTitle}>Bingo board</h3>
+              </div>
             </div>
-          </div>
-          <BingoGrid card={session.appState.bingoCard} />
-          <div className={styles.ballSummary}>
-            <p>
-              Ball pool: {session.appState.ballPool.length} remaining
-            </p>
-            {ballDrawReport && (
+            <BingoGrid card={session.appState.bingoCard} />
+            <div className={styles.ballSummary}>
               <p>
-                Last draw: {ballDrawReport.drawnNumbers.length} balls · +{" "}
-                {ballDrawReport.scoreDelta}
+                Ball pool: {session.appState.ballPool.length} remaining
               </p>
-            )}
-            {hasBingo && !bingoExhausted && (
-              <Button variant="ghost" onClick={resetBingoBoard}>
-                Reset bingo card
-              </Button>
-            )}
-            {bingoExhausted && (
-              <p className={styles.helperText}>
-                All {TOTAL_BINGO_LINES} lines complete — no more bingo bonuses.
-              </p>
-            )}
-          </div>
-        </section>
+              {ballDrawReport && (
+                <p>
+                  Last draw: {ballDrawReport.drawnNumbers.length} balls · +{" "}
+                  {ballDrawReport.scoreDelta}
+                </p>
+              )}
+              {hasBingo && !bingoExhausted && (
+                <Button variant="ghost" onClick={resetBingoBoard}>
+                  Reset bingo card
+                </Button>
+              )}
+              {bingoExhausted && (
+                <p className={styles.helperText}>
+                  All {TOTAL_BINGO_LINES} lines complete — no more bingo bonuses.
+                </p>
+              )}
+            </div>
+          </section>
+        </div>
       </main>
 
       <section className={styles.bonusPanel}>
@@ -911,10 +1093,7 @@ export default function Page(): ReactElement {
         wordRoundSeconds={wordRoundSeconds}
         setWordRoundSeconds={setWordRoundSeconds}
         maxSeconds={MAX_WORD_ROUND_SECONDS}
-        timerPaused={timerPaused}
-        onToggleTimerPause={toggleTimerPause}
         onResetSession={resetSession}
-        timerStatusText={timerStatusText}
         themePreference={themePreference}
         appliedTheme={activeTheme}
         onThemePreferenceChange={handleThemePreferenceChange}

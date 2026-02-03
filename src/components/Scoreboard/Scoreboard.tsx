@@ -25,7 +25,7 @@ export default function Scoreboard({
   const displayBest = usePedometer(bestScore ?? 0);
 
   return (
-    <section className={styles.root}>
+    <section className={styles.root} aria-hidden="true">
       <div className={styles.slot}>
         <p className={styles.label}>Phase</p>
         <strong className={styles.value}>{phaseLabel}</strong>
